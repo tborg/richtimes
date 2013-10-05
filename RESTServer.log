@@ -1,0 +1,168 @@
+2013-10-05 12:14:06,961 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    send_from_directory(app.config.get('DEV_STATIC_APP_DIR'), fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:14:15,484 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    send_from_directory(app.config.get('DEV_STATIC_APP_DIR'), fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:18:59,237 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    send_from_directory(app.root_path + '../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:19:53,573 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    send_from_directory(app.root_path + '../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:19:54,697 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    send_from_directory(app.root_path + '../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:09,882 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:09,894 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:09,900 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:09,901 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:46,085 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:46,086 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:46,087 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:46,334 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:49,863 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:49,865 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:49,866 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:22:49,867 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 13, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:24:23,638 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:24:23,650 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:24:23,651 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:24:23,655 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 14, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', fname)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:24:41,190 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 12, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', filename)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:26:12,420 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 11, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', filename)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
+2013-10-05 12:26:57,761 ERROR: not found
+Traceback (most recent call last):
+  File "/Users/trevorborg/richtimes/server/dev_static.py", line 11, in serve_static_resouce
+    return send_from_directory(app.root_path + '/../../app', filename)
+  File "/Users/trevorborg/richtimes/env/lib/python2.7/site-packages/flask/helpers.py", line 614, in send_from_directory
+    raise NotFound()
+NotFound: 404: Not Found
