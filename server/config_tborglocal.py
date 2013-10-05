@@ -10,5 +10,9 @@ class Config(CommonConfig):
 
     SQLALCHEMY_BINDS = {key: "mysql+mysqldb://%(user)s:%(password)s@%(host)s/%(database)s?charset=utf8" % value for key, value in CONNECTIONS.iteritems()}
 
-    DEV_STATIC_APP_DIR = '../../app'
-    DEV_STATIC_TMP_DIR = '../../.tmp'
+    APP_ROOT_FROM_MAIN = '../../'
+
+    DEV_STATIC_APP_DIR = APP_ROOT_FROM_MAIN + 'app'
+    DEV_STATIC_TMP_DIR = APP_ROOT_FROM_MAIN + '.tmp'
+
+    XML_DIR = APP_ROOT_FROM_MAIN + 'xml'
