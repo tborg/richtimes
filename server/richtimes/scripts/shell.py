@@ -2,6 +2,7 @@ from richtimes import app, db
 from lxml import etree
 from os import path
 from build_pub_data import build_pub_data
+from richtimes.news.models import PubData
 
 
 def get_etree(fname):
@@ -43,4 +44,5 @@ def make_shell_context():
             'db': db,
             'get_etree': get_etree,
             'build_pub_data': build_pub_data,
-            'drop_and_rebuild_tables': drop_and_rebuild_tables}
+            'drop_and_rebuild_tables': drop_and_rebuild_tables,
+            'PubData': PubData}

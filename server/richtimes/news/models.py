@@ -1,4 +1,5 @@
 from richtimes import db
+from lxml import etree
 
 
 class PubData(db.Model):
@@ -19,6 +20,11 @@ class PubData(db.Model):
     day = db.Column(db.Integer)
     volume = db.Column(db.String(10))
     filename = db.Column(db.String(50), unique=True)
+    sections = db.relationship('Section', backref='issue', lazy='dynamic')
+    subsections = db.relationship('SubSection', backref='issue',
+                                  lazy='dynamic')
+    # Hold a reference to the tree on the object for efficiency.
+    _etree = None
 
     def __init__(self, filename):
         self.filename = filename
@@ -30,8 +36,11 @@ class PubData(db.Model):
         Get an etree instance of the issue.
         :return: An lxml.etree instance of the issue's TEI representation.
         """
+        if self._etree:
+            return self._etree
         from richtimes.scripts.shell import get_etree
-        return get_etree(self.filename)
+        self._etree = get_etree(self.filename)
+        return self._etree
 
     def _parse(self, tree):
         """
@@ -56,4 +65,113 @@ class PubData(db.Model):
                 'month': self.month,
                 'day': self.day,
                 'volume': self.volume,
-                'filename': self.filename}
+                'filename': self.filename,
+                'sections': [s.id for s in self.sections.all()],
+                'subsections': [s.id for s in self.subsections.all()]}
+
+    def get_sections(self):
+        """
+        Save references to all of the sections in this issue.
+
+        This should only be run once, when the database is being
+        initialized.
+        """
+        root = self.get_etree()
+        for e in root.xpath('//div2'):
+            s = Section(issue_id=self.id,
+                        xpath=root.getpath(e),
+                        type=e.attrib['type'])
+            db.session.add(s)
+        db.session.commit()
+
+
+class BaseIssueNode():
+    """
+    Abstract base class for a table representing a node in an issue.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    xpath = db.Column(db.String(200))
+    issue_id = db.Column(db.Integer, db.ForeignKey('pub_data.id'))
+    _etree = None
+
+    def get_etree(self):
+        """
+        Get an lxml.etree representation of this node in the issue.
+        :return: instance of lxml.etree
+        """
+        if self._etree:
+            return self._etree
+        root = self.issue.get_etree()
+        self._etree = root.xpath(self.xpath)[0]
+        return self._etree
+
+    def get_xml(self):
+        """
+        Get the string representation of this node in the issue.
+        :return: The TEI.2-encoded representation of this node.
+        """
+        return etree.tostring(self.get_etree())
+
+
+class Section(db.Model, BaseIssueNode):
+    """
+    This table represents sections of an issue, corresponding to a TEI.2 `div2`
+    element.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.Integer, primary_key=True)
+    xpath = db.Column(db.String(200))
+    issue_id = db.Column(db.Integer, db.ForeignKey('pub_data.id'))
+    type = db.Column(db.String(100))
+    subsections = db.relationship('SubSection', backref='section',
+                                  lazy='dynamic')
+
+    def get_subsections(self):
+        """
+        Save a representation of all of the subsections under this section in
+        the document.
+
+        This should only be run once, when the database is being initialized.
+        """
+        root = self.issue.get_etree()
+        for e in root.xpath(self.xpath + '//div3'):
+            s = SubSection(issue_id=self.issue.id,
+                           section_id=self.id,
+                           xpath=root.getpath(e),
+                           type=e.attrib['type'])
+            db.session.add(s)
+        db.session.commit()
+
+    def to_json(self):
+        """
+        Get a jsonifiable representation of this table.
+        :return: A dictionary of this instance's attributes.
+        """
+        return {'id': self.id,
+                'xpath': self.xpath,
+                'issue_id': self.issue_id,
+                'type': self.type,
+                'subsections': [s.id for s in self.subsections.all()]}
+
+
+class SubSection(db.Model, BaseIssueNode):
+    """
+    This table represents subsections of an issue, corresponding to a TEI.2
+    `div3` element.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.Integer, primary_key=True)
+    xpath = db.Column(db.String(200))
+    issue_id = db.Column(db.Integer, db.ForeignKey('pub_data.id'))
+    section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
+    type = db.Column(db.String(100))
+
+    def to_json(self):
+        """
+        Get a jsonifiable representation of this table.
+        :return: A dictionary of this instance's attributes.
+        """
+        return {'id': self.id,
+                'xpath': self.xpath,
+                'issue_id': self.issue_id,
+                'type': self.type}

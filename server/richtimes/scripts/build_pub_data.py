@@ -22,4 +22,4 @@ def build_pub_data():
         count += 1
     print 'committing {} files'.format(count)
     db.session.commit()
-    print 'finished'
+    print 'Finished getting publication data.'
