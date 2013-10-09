@@ -89,9 +89,6 @@ class BaseIssueNode():
     """
     Abstract base class for a table representing a node in an issue.
     """
-    id = db.Column(db.Integer, primary_key=True)
-    xpath = db.Column(db.String(200))
-    issue_id = db.Column(db.Integer, db.ForeignKey('pub_data.id'))
     _etree = None
 
     def get_etree(self):
@@ -165,6 +162,45 @@ class SubSection(db.Model, BaseIssueNode):
     issue_id = db.Column(db.Integer, db.ForeignKey('pub_data.id'))
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
     type = db.Column(db.String(100))
+    person_associations = db.relationship('PersNameMention',
+                                          backref='subsection',
+                                          lazy='dynamic')
+
+    def get_pers_names(self):
+        tree = self.get_etree()
+        pers_names = {}
+        tags = {}
+        for e in tree.xpath('.//persName'):
+            pers_name_id = e.attrib.get('n')
+            if not pers_name_id:
+                continue
+            pers_name = pers_names.get(pers_name_id)
+            if not pers_name:
+                pers_name = PersName.query.get(pers_name_id)
+                if not pers_name:
+                    pers_name = PersName(id=pers_name_id)
+                    db.session.add(pers_name)
+                pers_names[pers_name_id] = pers_name
+            element_id = e.attrib.get('id')
+            pers_name_mention = PersNameMention(element_id=element_id,
+                                                subsection_id=self.id,
+                                                person_id=pers_name_id)
+            db.session.add(pers_name_mention)
+            db.session.flush()  # To get a reference to the mention's ID.
+            if 'reg' not in e.attrib:
+                continue
+            tag_id = e.attrib['reg']
+            tag = tags.get(tag_id)
+            if not tag:
+                tag = PersNameTag.query.get(tag_id)
+                if not tag:
+                    tag = PersNameTag(id=tag_id)
+                    db.session.add(tag)
+                tags[tag_id] = tag
+            assoc = PersNameMentionTag(tag_id=tag_id,
+                                       mention_id=pers_name_mention.id)
+            db.session.add(assoc)
+        db.session.commit()
 
     def to_json(self):
         """
@@ -175,3 +211,54 @@ class SubSection(db.Model, BaseIssueNode):
                 'xpath': self.xpath,
                 'issue_id': self.issue_id,
                 'type': self.type}
+
+
+class PersName(db.Model):
+    """
+    Represents a personal name occurring in the Richmond Dispatch.
+
+    The primary key is the value of the `n` attribute of the `persName` tag.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.String(100), primary_key=True)
+    mentions = db.relationship('PersNameMention',
+                               backref='person',
+                               lazy='dynamic')
+
+
+class PersNameMention(db.Model):
+    """
+    Represents a mention of a personal name in the Richmond Dispatch.
+
+    The primary key is the `id` attribute of the `persName` tag.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.Integer, primary_key=True)
+    # This unfortunately is not unique.
+    element_id = db.Column(db.String(100))
+    subsection_id = db.Column(db.Integer, db.ForeignKey('sub_section.id'))
+    person_id = db.Column(db.String(100), db.ForeignKey('pers_name.id'))
+    mention_tag_associations = db.relationship('PersNameMentionTag',
+                                               backref='mention',
+                                               lazy='dynamic')
+
+
+class PersNameTag(db.Model):
+    """
+    Represents a metadata tag associated with a `persName` element.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.String(100), primary_key=True)
+    mention_tag_associations = db.relationship('PersNameMentionTag',
+                                               backref='tag',
+                                               lazy='dynamic')
+
+
+class PersNameMentionTag(db.Model):
+    """
+    Associates a tag with a mention of a personal name.
+    """
+    __bind_key__ = 'richtimes'
+    id = db.Column(db.Integer, primary_key=True)
+    tag_id = db.Column(db.String(100), db.ForeignKey('pers_name_tag.id'))
+    mention_id = db.Column(db.Integer, db.ForeignKey('pers_name_mention.id'))

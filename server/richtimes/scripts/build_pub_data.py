@@ -23,3 +23,17 @@ def build_pub_data():
     print 'committing {} files'.format(count)
     db.session.commit()
     print 'Finished getting publication data.'
+    print 'Building index'
+    for i in PubData.query.all():
+        print 'sections for {}-{}-{}'.format(i.year, i.month, i.day)
+        i.get_sections()
+        sections = i.sections.all()
+        print '\tfound {} sections'.format(len(sections))
+        print '\tgetting subsections.'
+        for s in sections:
+            s.get_subsections()
+            subsections = s.subsections.all()
+            print '\t\tfound {} subsections'.format(len(subsections))
+            print '\t\tgetting persnames'
+            for ss in subsections:
+                ss.get_pers_names()
