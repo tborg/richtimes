@@ -4,23 +4,23 @@ from glob import glob
 from os.path import join, basename
 
 
-def get_issues():
+def get_issues(filenames):
     """
     Iterates through all of the XML files in the main XML directory (set in
     app.config), building up a row of metadata for each issue of the Richmond
     Times in the richtimes.pub_data table. This process should only be run once
     on a clean database.
     """
-    filenames = glob(join(app.root_path, app.config['XML_DIR'], '*.xml'))
-    print 'Building publication data for {} issues.'.format(len(filenames))
-    count = 0
-    for f in filenames:
-        p = PubData(basename(f))
-        print '{}-{}-{}'.format(p.year, p.month, p.day)
-        db.session.add(p)
-        count += 1
-    print 'committing {} files'.format(count)
+    issues = map(get_issue, filenames)
     db.session.commit()
+    return issues
+
+
+def get_issue(fname):
+    p = PubData(basename(fname))
+    print '{}-{}-{}'.format(p.year, p.month, p.day)
+    db.session.add(p)
+    return p
 
 
 def get_sections(issues):
@@ -61,9 +61,15 @@ def get_pers_names(issues):
     db.session.commit()
 
 
+def iterissues(size=50):
+    filenames = glob(join(app.root_path, app.config['XML_DIR'], '*.xml'))
+    while filenames:
+        yield get_issues(filenames[:size])
+        filenames = filenames[size:]
+
+
 def build_pub_data():
-    get_issues()
-    issues = PubData.query.all()
-    get_sections(issues)
-    get_subsections(issues)
-    get_pers_names(issues)
+    for issues in iterissues():
+        get_sections(issues)
+        get_subsections(issues)
+        get_pers_names(issues)

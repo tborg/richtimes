@@ -78,14 +78,16 @@ class PubData(db.Model):
         """
         root = self.get_etree()
         for e in root.xpath('//div2'):
-            section_type_name = e.attrib.get('type', '').lower().strip()
-            if not section_type_name:
+            id = e.attrib.get('type', '').lower().strip()
+            if not id:
                 continue
-            section_type = section_types.get(section_type_name)
+            section_type = section_types.get(id)
             if not section_type:
-                section_type = SectionType(id=section_type_name)
-                db.session.add(section_type)
-                section_types[section_type_name] = section_type
+                section_type = SectionType.query.get(id)
+                if not section_type:
+                    section_type = SectionType(id=id)
+                    db.session.add(section_type)
+                section_types[id] = section_type
             s = Section(issue_id=self.id,
                         xpath=root.getpath(e),
                         type_id=section_type.id)
@@ -139,18 +141,20 @@ class Section(db.Model, BaseIssueNode):
         """
         root = self.issue.get_etree()
         for e in root.xpath(self.xpath + '//div3'):
-            subsection_type_name = e.attrib.get('type', '').lower().strip()
-            if not subsection_type_name:
+            id = e.attrib.get('type', '').lower().strip()
+            if not id:
                 continue
-            subsection_type = subsection_types.get(subsection_type_name)
+            subsection_type = subsection_types.get(id)
             if not subsection_type:
-                subsection_type = SubSectionType(id=subsection_type_name)
-                db.session.add(subsection_type)
-                subsection_types[subsection_type_name] = subsection_type
+                subsection_type = SubSectionType.query.get(id)
+                if not subsection_type:
+                    subsection_type = SubSectionType(id=id)
+                    db.session.add(subsection_type)
+                subsection_types[id] = subsection_type
             s = SubSection(issue_id=self.issue.id,
                            section_id=self.id,
                            xpath=root.getpath(e),
-                           type_id=subsection_type_name)
+                           type_id=id)
             db.session.add(s)
 
     def to_json(self):
@@ -192,18 +196,20 @@ class SubSection(db.Model, BaseIssueNode):
     def get_pers_names(self, pers_names, tags):
         tree = self.get_etree()
         for e in tree.xpath('.//persName'):
-            pers_name_id = e.attrib.get('n', '').lower().strip()
-            if not pers_name_id:
+            id = e.attrib.get('n', '').lower().strip()
+            if not id:
                 continue
-            pers_name = pers_names.get(pers_name_id)
+            pers_name = pers_names.get(id)
             if not pers_name:
-                pers_name = PersName(id=pers_name_id)
-                db.session.add(pers_name)
-                pers_names[pers_name_id] = pers_name
+                pers_name = PersName.query.get(id)
+                if not pers_name:
+                    pers_name = PersName(id=id)
+                    db.session.add(pers_name)
+                pers_names[id] = pers_name
             element_id = e.attrib.get('id')
             pers_name_mention = PersNameMention(element_id=element_id,
                                                 subsection_id=self.id,
-                                                person_id=pers_name_id)
+                                                person_id=id)
             db.session.add(pers_name_mention)
             db.session.flush()  # To get a reference to the mention's ID.
             if 'reg' not in e.attrib:
@@ -211,8 +217,10 @@ class SubSection(db.Model, BaseIssueNode):
             tag_id = e.attrib['reg'].lower().strip()
             tag = tags.get(tag_id)
             if not tag:
-                tag = PersNameTag(id=tag_id)
-                db.session.add(tag)
+                tag = PersNameTag.query.get(tag_id)
+                if not tag:
+                    tag = PersNameTag(id=tag_id)
+                    db.session.add(tag)
                 tags[tag_id] = tag
             assoc = PersNameMentionTag(tag_id=tag_id,
                                        mention_id=pers_name_mention.id)
