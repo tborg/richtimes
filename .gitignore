@@ -1,4 +1,5 @@
 /build
+/.tmp
 /xml
 /.sass-cache
 /dist

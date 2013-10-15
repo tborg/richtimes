@@ -9,13 +9,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     from richtimes import app
+    from richtimes.news.views import news
     from dev_static import dev_static
-    from flask import redirect
+    from flask import send_from_directory
 
     app.register_blueprint(dev_static)
+    app.register_blueprint(news)
 
     @app.route('/')
     def index():
-        return redirect('/app/index.html')
+        return send_from_directory(app.root_path + '/../../app', 'index.html')
 
     app.run(debug=True, host=args.host, port=args.port)

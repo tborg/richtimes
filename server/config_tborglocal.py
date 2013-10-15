@@ -15,4 +15,4 @@ class Config(CommonConfig):
     DEV_STATIC_APP_DIR = APP_ROOT_FROM_MAIN + 'app'
     DEV_STATIC_TMP_DIR = APP_ROOT_FROM_MAIN + '.tmp'
 
-    XML_DIR = APP_ROOT_FROM_MAIN + 'xml/_xml'
+    XML_DIR = APP_ROOT_FROM_MAIN + 'xml'

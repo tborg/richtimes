@@ -36,7 +36,7 @@ def get_sections(issues):
 
 def get_subsections(issues):
     """
-    Iterate through all of the issues, indexing subsections by type.
+    Iterate through all of the issues, indexing subsections by type.=
     """
     subsection_types = {}
     for i in issues:
@@ -46,18 +46,67 @@ def get_subsections(issues):
     db.session.commit()
 
 
+def get_articles(issues):
+    """
+    Iterate through all of the issues, indexing articles by type.
+    """
+    article_types = {}
+    for i in issues:
+        print 'articles for {}-{}-{}'.format(i.year, i.month, i.day)
+        for s in i.subsections.all():
+            s.get_articles(article_types)
+    db.session.commit()
+
+
 def get_pers_names(issues):
     """
-    Iterate through all of the issues, indexing persNames mentions.
+    Iterate through all of the issues, indexing persName mentions.
     """
     pers_names = {}
     tags = {}
     for i in issues:
         print 'pers names for {}-{}-{}'.format(i.year, i.month, i.day)
-        for s in i.subsections.all():
+        for s in i.articles.all():
             s.get_pers_names(pers_names, tags)
     print 'found {} persNames with {} tags'.format(len(pers_names.keys()),
                                                    len(tags.keys()))
+    db.session.commit()
+
+
+def get_place_names(issues):
+    """
+    Iterate through all of the issues, indexing placeName mentions.
+    """
+    placeNames = {}
+    for i in issues:
+        print 'place names for {}-{}-{}'.format(i.year, i.month, i.day)
+        for s in i.articles.all():
+            s.get_place_names(placeNames)
+    print 'found {} placeNames'.format(len(placeNames.keys()))
+    db.session.commit()
+
+
+def get_org_names(issues):
+    """
+    Iterate through all of the issues, indexing orgName mentions.
+    """
+    org_types = {}
+    for i in issues:
+        print 'org names for {}-{}-{}'.format(i.year, i.month, i.day)
+        for s in i.articles.all():
+            s.get_org_names(org_types)
+    db.session.commit()
+
+
+def get_ref_strings(issues):
+    """
+    Iterate through all of the issues, indexing referencing strings.
+    """
+    ref_string_types = {}
+    for i in issues:
+        print 'referencing strings for {}-{}-{}'.format(i.year, i.month, i.day)
+        for s in i.articles.all():
+            s.get_ref_strings(ref_string_types)
     db.session.commit()
 
 
@@ -72,4 +121,8 @@ def build_pub_data():
     for issues in iterissues():
         get_sections(issues)
         get_subsections(issues)
+        get_articles(issues)
         get_pers_names(issues)
+        get_place_names(issues)
+        get_org_names(issues)
+        get_ref_strings(issues)

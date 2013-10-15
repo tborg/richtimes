@@ -1,6 +1,6 @@
 require.config({
     paths: {
-        jquery: '../bower_components/jquery/jquery',
+        app: './app',
         bootstrapAffix: '../bower_components/sass-bootstrap/js/affix',
         bootstrapAlert: '../bower_components/sass-bootstrap/js/alert',
         bootstrapButton: '../bower_components/sass-bootstrap/js/button',
@@ -11,7 +11,13 @@ require.config({
         bootstrapScrollspy: '../bower_components/sass-bootstrap/js/scrollspy',
         bootstrapTab: '../bower_components/sass-bootstrap/js/tab',
         bootstrapTooltip: '../bower_components/sass-bootstrap/js/tooltip',
-        bootstrapTransition: '../bower_components/sass-bootstrap/js/transition'
+        bootstrapTransition: '../bower_components/sass-bootstrap/js/transition',
+        d3: '../bower_components/d3/d3',
+        ember: '../bower_components/ember/ember',
+        emberData: '../bower_components/ember-data/index',
+        jquery: '../bower_components/jquery/jquery',
+        handlebars: '../bower_components/handlebars/handlebars',
+        text: '../bower_components/requirejs-text/text'
     },
     shim: {
         bootstrapAffix: {
@@ -46,13 +52,21 @@ require.config({
         },
         bootstrapTransition: {
             deps: ['jquery']
+        },
+        d3: {
+            exports: 'd3'
+        },
+        ember: {
+            deps: ['jquery', 'handlebars'],
+            exports: 'Ember'
+        },
+        emberData: {
+            deps: ['ember'],
+            exports: 'DS'
         }
     }
 });
 
-require(['app', 'jquery'], function (app, $) {
+require(['./routes/router'], function () {
     'use strict';
-    // use app here
-    console.log(app);
-    console.log('Running jQuery %s', $().jquery);
 });

@@ -3,7 +3,7 @@ from lxml import etree
 from os import path
 from build_pub_data import build_pub_data
 from richtimes.news.models import PubData
-
+from flask.ext.script import Command
 
 def get_etree(fname):
     """
@@ -32,6 +32,13 @@ def drop_and_rebuild_tables():
     from richtimes.news import models
     db.drop_all()
     db.create_all(bind='richtimes')
+
+
+class Rebuild(Command):
+
+    def run(self):
+        drop_and_rebuild_tables()
+        build_pub_data()
 
 
 def make_shell_context():
