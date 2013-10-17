@@ -1,0 +1,6 @@
+<ul class="nav nav-pills">
+    {{#each options}}
+        <li {{bindAttr class="active"}}><a href="#" {{action 'setSubsectionType' this}}>{{text}}</a></li>
+    {{/each}}
+</ul>
+{{outlet}}

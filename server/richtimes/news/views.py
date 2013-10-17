@@ -1,7 +1,11 @@
 from flask import Blueprint, jsonify, request
 from richtimes.news import models
+from sqlalchemy import not_
 
 news = Blueprint('news', __name__)
+
+
+IGNORE_SECTIONS = ['page-image', 'subscription', 'advertising']
 
 
 def paginate(q, default=25):
@@ -26,6 +30,20 @@ def get_dates():
         dates[i.year] = months
     dates = [{'id': k, 'months': v} for k, v in dates.iteritems()]
     return jsonify({'dates': dates})
+
+
+@news.route('/sections')
+def get_section_types():
+    section_types = models.SectionType.query\
+        .filter(not_(models.SectionType.id.in_(IGNORE_SECTIONS)))\
+        .all()
+    return jsonify({'sections': [s.to_json() for s in section_types]})
+
+
+@news.route('/sections/<section_id>')
+def get_subsection_types(section_id):
+    section_type = models.SectionType.query.get(section_id)
+    return jsonify({'subsections': section_type.to_json()})
 
 
 @news.route('/issues/<id>')

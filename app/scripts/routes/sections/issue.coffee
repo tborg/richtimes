@@ -10,6 +10,3 @@ define (require) ->
     month: DS.attr 'number'
     day: DS.attr 'number'
     document: DS.attr()
-
-
-  # App.IssuesRoute = Ember.Route.extend

@@ -185,6 +185,17 @@ class SectionType(db.Model):
     id = db.Column(db.String(100), primary_key=True)
     sections = db.relationship('Section', backref='type', lazy='dynamic')
 
+    def to_json(self):
+        """
+        Includes the set of related subsection types.
+        """
+        subsection_types = set()
+        for s in self.sections.all():
+            for ss in s.subsections.all():
+                subsection_types.add(ss.type_id)
+        return {'id': self.id,
+                'subsections': list(subsection_types)}
+
 
 class Subsection(db.Model, BaseIssueNode):
     __bind_key__ = 'richtimes'

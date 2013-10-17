@@ -55,7 +55,8 @@ define (require) ->
     ).observes('issueId', 'year', 'month', 'day')
 
     issueId: (() ->
-      '%@-%@-%@'.fmt @get('year.id'), @get('month.id'), @get('day.id')
+      [y, m, d] = [@get('year.id'), @get('month.id'), @get('day.id')]
+      if y and m and d then '%@-%@-%@'.fmt y, m, d else null
     ).property('year', 'month', 'day')
 
     actions:
@@ -64,3 +65,6 @@ define (require) ->
 
   App.IssuesRoute = Ember.Route.extend
     model: () -> @store.findAll 'date'
+
+    serialize: () ->
+      subsection_name: @controllerFor('subsections').get 'active'
