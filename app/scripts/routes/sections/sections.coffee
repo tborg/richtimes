@@ -7,6 +7,7 @@ define (require) ->
     subsections: DS.attr()
 
   App.SectionsController = Ember.ArrayController.extend
+    needs: ['subsections']
 
     options: (() ->
       active = @get 'active'
@@ -18,6 +19,7 @@ define (require) ->
     actions:
       setSectionType: ({text}) ->
         @set 'active', text
+        @set 'controllers.subsections.active', null
         @transitionToRoute 'subsections', @store.find 'section', text
 
   App.SectionsRoute = Ember.Route.extend

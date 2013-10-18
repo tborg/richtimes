@@ -1,11 +1,8 @@
 <nav class="navbar navbar-default sections" role="navigation">
-    <div class="navbar-header"><span class="navbar-brand">Section</span></div>
-    <div class="collapse navbar-collapse navbar-ex1-collapse">
-        <ul class="nav navbar-nav">
-            {{#each options}}
-                <li {{bindAttr class="active"}}><a href="#" {{action 'setSectionType' this}}>{{text}}</a></li>
-            {{/each}}
-        </ul>
-    </div>
+    <ul class="nav navbar-nav">
+        {{#each options}}
+            <li {{bindAttr class="active"}}><a href="#" {{action 'setSectionType' this}}>{{text}}</a></li>
+        {{/each}}
+    </ul>
 </nav>
 {{outlet}}

@@ -21,7 +21,12 @@ define (require) ->
         @transitionToNext()
       
     transitionToNext: () ->
+      @refreshIssuesController()
       @transitionToRoute 'issues', @store.find 'subsection', @get 'active'
+
+    refreshIssuesController: () ->
+      @get('controllers.issues')
+        .setProperties year: null, month: null, day: null
 
   App.SubsectionsRoute = Ember.Route.extend
 
@@ -33,6 +38,7 @@ define (require) ->
         preferred = transition.params.subsection_id
         active = if preferred and preferred in options then preferred else options[0]
         controller.set 'active', active
+        controller.refreshIssuesController()
         next = @transitionTo 'issues', @store.find 'subsection', active
         next.params = transition.params
         next
