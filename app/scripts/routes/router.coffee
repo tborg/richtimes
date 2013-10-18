@@ -4,7 +4,7 @@ define (require) ->
   App.Router.map () ->
     @resource 'sections', ->
       @resource 'subsections', {path: ':section_id'}, ->
-        @resource 'issues', {path: ':subsection_name'}, ->
+        @resource 'issues', {path: ':subsection_id'}, ->
           @route 'issue', {path: ':issue_id'}
 
   App.IndexRoute = Ember.Route.extend

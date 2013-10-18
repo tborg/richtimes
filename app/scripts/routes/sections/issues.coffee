@@ -4,55 +4,45 @@ define (require) ->
   d3 = require 'd3'
   require 'bootstrapDropdown'
 
-  App.Date = DS.Model.extend
-    months: DS.attr()
+  # This is just so we can extract a pretty month name from a date object
+  now = new Date()
 
-  App.IssuesController = Ember.ArrayController.extend
+  fmtMonth = (m) ->
+    now.setMonth(parseInt(m, 10) - 1)
+    d3.time.format('%B') now
+
+  App.Subsection = DS.Model.extend
+    dates: DS.attr()
+
+  App.IssuesController = Ember.ObjectController.extend
     year: null,
     month: null,
     day: null,
 
     years: (() ->
-      @getEach('id').map (id) -> id: id, text: id, key: 'year'
-    ).property 'content'
-
-    yearsChanged: (() ->
-      @set 'year', @get('years.0')
-    ).observes('content', 'years')
+      @get('dates')
+        .getEach('year')
+        .map (d) -> id: d, text: d, key: 'year'
+    ).property 'dates'
 
     months: (() ->
-      now = new Date()
-      fmt = d3.time.format('%B')
       year = @get 'year.id'
       if not year then return []
-      d3.keys(@findProperty('id', year).get('months')).map (d) ->
-        now.setMonth parseInt(d, 10) - 1
-        id: d, text: fmt(now), key: 'month'
-    ).property('content', 'year')
-
-    monthsChanged: (() ->
-      @set 'month', @get 'months.0'
-    ).observes('content', 'months')
+      d3.keys(@get('dates').findProperty('year', year)?.months or {})
+        .map (d) ->
+          id: d, text: fmtMonth(d), key: 'month'
+    ).property('dates', 'year')
 
     days: (() ->
       year = @get 'year.id'
       month = @get 'month.id'
       unless year and month then return []
-      @findProperty('id', year).get('months.%@.days'.fmt month).map (d) -> 
-        id: d, text: d, key: 'day'
-    ).property('content', 'year', 'month')
+      @get('dates').findProperty('year', year)
+        .months[month].days.map (d) -> id: d, text: d, key: 'day'
+    ).property('dates', 'year', 'month')
 
-    daysChanged: (() ->
-      @set 'day', @get 'days.0'
-    ).observes('content', 'days')
-
-    dateChanged: (() ->
-      year = @get('year.id')
-      month = @get('month.id')
-      day = @get('day.id')
-      if year and month and day
-        @transitionToRoute 'issues.issue', @store.find 'issue', @get 'issueId'
-    ).observes('issueId', 'year', 'month', 'day')
+    transitionToNext: () ->
+      @transitionToRoute 'issues.issue', @store.find 'issue', @get 'issueId'
 
     issueId: (() ->
       [y, m, d] = [@get('year.id'), @get('month.id'), @get('day.id')]
@@ -60,11 +50,34 @@ define (require) ->
     ).property('year', 'month', 'day')
 
     actions:
-      changeDate: (date) -> @set date.key, date
-
+      changeDate: (date) ->
+        @set date.key, date
+        if date.key is 'year'
+          @set 'month', @get 'months.0'
+          @set 'day', @get 'days.0'
+        else if date.key is 'month'
+          @set 'day', @get 'days.0'
+        @transitionToNext()
 
   App.IssuesRoute = Ember.Route.extend
-    model: () -> @store.findAll 'date'
 
-    serialize: () ->
-      subsection_name: @controllerFor('subsections').get 'active'
+    afterModel: (model, transition) ->
+      controller = @controllerFor 'issues'
+      issueId = controller.get 'issueId'
+      if issueId then return
+      dates = model.get('dates')
+      preferred = transition.params.issue_id or ''
+      if preferred
+        [y, m, d] = preferred.split '-'
+      else
+        y = '1860'
+        months = dates.findProperty('year', y).months
+        m = Ember.keys(months)[0]
+        d = months[m].days[0]
+      controller.set 'year', id: y, text: y, key: 'year'
+      controller.set 'month', id: m, text: fmtMonth(m), key: 'month'
+      controller.set 'day', id: d, text: d, key: 'day'
+      next = @transitionTo 'issues.issue', @store
+        .find 'issue', '%@-%@-%@'.fmt y, m, d
+      next.params = transition.params
+      next

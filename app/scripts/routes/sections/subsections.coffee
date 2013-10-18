@@ -10,36 +10,32 @@ define (require) ->
 
     options: (() ->
       active = @get 'active'
-      @get('subsections').map (d) ->
+      $.makeArray(@get('subsections')).map (d) ->
         text: d
         active: d is active
     ).property('subsections', 'active')
 
-    contentChanged: (() ->
-      active = @get('active')
-      subsections = @get('subsections')
-      if Ember.isEmpty subsections then return
-      if active in subsections then return
-      @set 'active', subsections[0]
-    ).observes('subsections')
-
-    activeSectionChanged: (() ->
-      if @get 'active'
-        issueId = @get 'issueId'
-        if issueId
-          @transitionToRoute 'issues.issue', @store.find 'issue', issueId
-        else
-          @transitionToRoute 'issues'
-
-    ).observes 'active'
-
     actions:
-      setSubsectionType: (option) -> @set 'active', option.text
+      setSubsectionType: (option) ->
+        @set 'active', option.text
+        @transitionToNext()
+      
+    transitionToNext: () ->
+      @transitionToRoute 'issues', @store.find 'subsection', @get 'active'
 
   App.SubsectionsRoute = Ember.Route.extend
+
+    afterModel: (model, transition) ->
+      controller = @controllerFor 'subsections'
+      active = controller.get 'active'
+      if not active
+        options = model.get('subsections')
+        preferred = transition.params.subsection_id
+        active = if preferred and preferred in options then preferred else options[0]
+        controller.set 'active', active
+        next = @transitionTo 'issues', @store.find 'subsection', active
+        next.params = transition.params
+        next
+
     serialize: () ->
       section_id: @controllerFor('sections').get('active')
-
-    setupController: (controller, model) ->
-      controller.set 'content', model
-      @controllerFor('sections').set('active', model.get 'id')

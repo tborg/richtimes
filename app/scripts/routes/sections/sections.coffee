@@ -15,18 +15,22 @@ define (require) ->
         active: d.id is active
     ).property 'content', 'active'
 
-    contentChanged: (() ->
-      if @get('length') and not @get('active')
-        @set 'active', @get('content.content.0.id')
-    ).observes('content')
-
-    activeSectionChanged: (() ->
-      if active = @get 'active'
-        @transitionToRoute 'subsections', @store.find 'section', active
-    ).observes 'active'
-
     actions:
-      setSectionType: ({text}) -> @set 'active', text
+      setSectionType: ({text}) ->
+        @set 'active', text
+        @transitionToRoute 'subsections', @store.find 'section', text
 
   App.SectionsRoute = Ember.Route.extend
-    model: () -> @store.findAll 'section'
+    model: (params) -> @store.findAll 'section'
+
+    afterModel: (model, transition) ->
+      controller = @controllerFor 'sections'
+      active = controller.get 'active'
+      if not active
+        options = model.getEach 'id'
+        preferred = transition.params.section_id
+        active = if preferred and preferred in options then preferred else options[0]
+        controller.set 'active', active
+        next = @transitionTo 'subsections', @store.find 'section', active
+        next.params = transition.params
+        next

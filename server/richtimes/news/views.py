@@ -18,18 +18,23 @@ def paginate(q, default=25):
     return (q, offset)
 
 
-@news.route('/dates')
-def get_dates():
-    issues = models.PubData.query.all()
+@news.route('/subsections/<subsection_id>')
+def get_dates_for_subsection_type(subsection_id):
+    subsection_type = models.SubsectionType.query.get(subsection_id)
+    issue_ids = set()
+    for ss in subsection_type.subsections.all():
+        issue_ids.add(ss.issue_id)
     dates = {}
+    filter = models.PubData.id.in_(list(issue_ids))
+    issues = models.PubData.query.filter(filter).all()
     for i in issues:
         months = dates.get(i.year, {})
         days = months.get(i.month, {'days': []})
         days['days'].append(i.day)
         months[i.month] = days
         dates[i.year] = months
-    dates = [{'id': k, 'months': v} for k, v in dates.iteritems()]
-    return jsonify({'dates': dates})
+    dates = [{'year': k, 'months': v} for k, v in dates.iteritems()]
+    return jsonify({'subsection': {'id': subsection_id, 'dates': dates}})
 
 
 @news.route('/sections')
