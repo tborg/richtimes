@@ -10,7 +10,8 @@
     "ember": "~1.0.0",
     "ember-data": "http://builds.emberjs.com/canary/ember-data.js",
     "requirejs-text": "~2.0.10",
-    "d3": "~3.3.7"
+    "d3": "~3.3.7",
+    "lodash": "~2.2.1"
   },
   "devDependencies": {}
 }

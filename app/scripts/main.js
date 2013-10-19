@@ -17,6 +17,7 @@ require.config({
         emberData: '../bower_components/ember-data/index',
         jquery: '../bower_components/jquery/jquery',
         handlebars: '../bower_components/handlebars/handlebars',
+        lodash: '../bower_components/lodash/dist/lodash',
         text: '../bower_components/requirejs-text/text'
     },
     shim: {
@@ -63,6 +64,9 @@ require.config({
         emberData: {
             deps: ['ember'],
             exports: 'DS'
+        },
+        lodash: {
+            exports: '_'
         }
     }
 });

@@ -52,7 +52,7 @@ def get_subsection_types(section_id):
 
 
 @news.route('/issues/<id>')
-def get_issues(id):
+def get_issue(id):
     year, month, day = id.split('-')
     i = models.PubData.query.filter_by(year=year, month=month, day=day).first()
     return jsonify({'issue': i.to_json()})

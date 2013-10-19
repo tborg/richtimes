@@ -1,5 +1,5 @@
 from richtimes import db
-from lxml import etree
+from lxml import etree, html
 
 
 class BaseIssueNode():
@@ -99,7 +99,7 @@ class PubData(db.Model):
                 'month': self.month,
                 'day': self.day,
                 'date_text': self.date_text,
-                'document': self.get_document_json()}
+                'sections': self.get_document_json()}
 
     def get_document_json(self):
         return [s.to_json() for s in self.sections.all()]
@@ -388,14 +388,85 @@ class Article(db.Model, BaseIssueNode):
                                        xpath=root.getpath(e))
             db.session.add(mention)
 
+    def get_html(self):
+        """
+        Transforms the XML into some browser-ready content.
+
+        Pre-defined transformations exist for certain tags; others are simply
+        converted to `<span class="tei $tag">`.
+
+        All attributes are prefixed with `data-tei-`.
+
+        The only special context we're interested in holding during DOM parsing
+        is whether or not we're in a table; in that case a `head` should be
+        translated into a `tr>th` instead of an `h3`.
+        """
+        def attributes(node):
+            attrs = {'class': 'tei {}'.format(node.tag)}
+            for k, v in node.attrib.iteritems():
+                attrs['data-tei-{}'.format(k)] = v
+            return attrs
+
+        def table(context, node):
+            this = etree.SubElement(context, 'table', **attributes(node))
+            this.text = node.text
+            this.tail = node.tail
+            for c in node.iterchildren(tag=etree.Element):
+                row = etree.SubElement(this, 'tr', **attributes(c))
+                if c.tag == 'head':
+                    header = etree.SubElement(row, 'td')
+                    header.text = c.text
+                    header.tail = c.tail
+                else:
+                    for cell in c.iterchildren():
+                        col = etree.SubElement(row, 'td', **attributes(cell))
+                        for _c in child_elements(cell):
+                            build(col, _c)
+                        col.text = cell.text
+                        col.tail = cell.tail
+            return this
+
+        def identity(context, node):
+            this = etree.SubElement(context, node.tag, **attributes(node))
+            this.text = node.text
+            this.tail = node.tail
+            for c in node.iterchildren(tag=etree.Element):
+                build(this, c)
+
+        def head(context, node):
+            this = etree.SubElement(context, 'h3', **attributes(node))
+            this.text = node.text
+            this.tail = node.tail
+            for c in node.iterchildren(tag=etree.Element):
+                build(this, c)
+            return this
+
+        def build(context, node):
+            if node.tag in transforms:
+                this = transforms[node.tag](context, node)
+            else:
+                this = etree.SubElement(context, 'span', **attributes(node))
+                this.text = node.text
+                this.tail = node.tail
+                for c in node.iterchildren(tag=etree.Element):
+                    build(this, c)
+            return this
+
+        transforms = {'table': table,
+                      'p': identity,
+                      'head': head}
+
+        root = etree.Element('article', id=str(self.id), type=self.type_id)
+        return html.tostring(build(root, self.get_etree()))
+
     def to_json(self):
         """
         Get a jsonifiable representation of this table.
         :return: A dictionary of this instance's attributes.
         """
         return {'id': self.id,
-                'type_id': self.type_id,
-                'node': self.get_json()}
+                'type': self.type_id,
+                'content': self.get_html()}
 
 
 class ArticleType(db.Model):
@@ -523,6 +594,13 @@ class RefStringMention(db.Model):
     ref_string_id = db.Column(db.Integer, db.ForeignKey('ref_string.id'))
 
 
+def child_elements(node):
+    """
+    Return just the child elements. Skip entities and comments.
+    """
+    return node.iterchildren(tag=etree.Element)
+
+
 def node_to_json(node):
     """
     Converts an lxml.etree instance into a jsonifiable format recursively.
@@ -531,7 +609,7 @@ def node_to_json(node):
     :return: objectified xml.
     """
     el = {'tag': node.tag, 'attrib': dict(node.attrib), 'text': node.text}
-    children = [node_to_json(c) for c in node.iterchildren(tag=etree.Element)]
+    children = [node_to_json(c) for c in child_elements(node)]
     if children:
         el['children'] = children
     return el
