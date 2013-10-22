@@ -1,8 +1,8 @@
 define (require) ->
   Ember = require 'ember'
-  require 'emberData'
-  require './templates/templates'
-
-  window.App = Ember.Application.create
-    LOG_TRANSITIONS: true
+  DS = require 'emberData'
+  # require 'emberData'
+  unless window.App
+    window.App = Ember.Application.create
+      LOG_TRANSITIONS: true
   window.App

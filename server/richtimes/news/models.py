@@ -98,8 +98,7 @@ class PubData(db.Model):
                 'year': self.year,
                 'month': self.month,
                 'day': self.day,
-                'date_text': self.date_text,
-                'sections': self.get_document_json()}
+                'date_text': self.date_text}
 
     def get_document_json(self):
         return [s.to_json() for s in self.sections.all()]
@@ -234,8 +233,7 @@ class Subsection(db.Model, BaseIssueNode):
 
     def to_json(self):
         return {'id': self.id,
-                'type': self.type_id,
-                'articles': [a.to_json() for a in self.articles.all()]}
+                'type': self.type_id}
 
 
 class SubsectionType(db.Model):
@@ -408,23 +406,26 @@ class Article(db.Model, BaseIssueNode):
             return attrs
 
         def table(context, node):
-            this = etree.SubElement(context, 'table', **attributes(node))
-            this.text = node.text
-            this.tail = node.tail
+            table = etree.SubElement(context, 'table', **attributes(node))
+            table.text = node.text
+            table.tail = node.tail
+            thead = etree.SubElement(table, 'thead')
+            tbody = etree.SubElement(table, 'tbody')
             for c in node.iterchildren(tag=etree.Element):
-                row = etree.SubElement(this, 'tr', **attributes(c))
                 if c.tag == 'head':
-                    header = etree.SubElement(row, 'td')
+                    row = etree.SubElement(thead, 'tr', **attributes(c))
+                    header = etree.SubElement(row, 'th')
                     header.text = c.text
                     header.tail = c.tail
                 else:
+                    row = etree.SubElement(tbody, 'tr', **attributes(c))
                     for cell in c.iterchildren():
                         col = etree.SubElement(row, 'td', **attributes(cell))
                         for _c in child_elements(cell):
                             build(col, _c)
                         col.text = cell.text
                         col.tail = cell.tail
-            return this
+            return table
 
         def identity(context, node):
             this = etree.SubElement(context, node.tag, **attributes(node))
@@ -441,6 +442,22 @@ class Article(db.Model, BaseIssueNode):
                 build(this, c)
             return this
 
+        # `list` is a reserved word ...
+        def _list(context, node):
+            this = etree.SubElement(context, 'ul', **attributes(node))
+            this.text = node.text
+            this.tail = node.tail
+            for c in child_elements(node):
+                li = etree.SubElement(this, 'li', **attributes(c))
+                if c.tag is 'item':
+                    li.text = c.text
+                    li.tail = c.tail
+                    for cc in child_elements(c):
+                        build(li, cc)
+                else:  # wrap non-list-item elements in a `li`.
+                    build(li, c)
+            return this
+
         def build(context, node):
             if node.tag in transforms:
                 this = transforms[node.tag](context, node)
@@ -454,7 +471,8 @@ class Article(db.Model, BaseIssueNode):
 
         transforms = {'table': table,
                       'p': identity,
-                      'head': head}
+                      'head': head,
+                      'list': _list}
 
         root = etree.Element('article', id=str(self.id), type=self.type_id)
         return html.tostring(build(root, self.get_etree()))
@@ -476,6 +494,9 @@ class ArticleType(db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.String(100), primary_key=True)
     articles = db.relationship('Article', backref='type', lazy='dynamic')
+
+    def to_json(self):
+        return {'id': self.id}
 
 
 class PersName(db.Model):

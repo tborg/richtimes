@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request
 from richtimes.news import models
-from sqlalchemy import not_
 
 news = Blueprint('news', __name__)
 
@@ -18,41 +17,44 @@ def paginate(q, default=25):
     return (q, offset)
 
 
-@news.route('/subsections/<subsection_id>')
-def get_dates_for_subsection_type(subsection_id):
-    subsection_type = models.SubsectionType.query.get(subsection_id)
-    issue_ids = set()
-    for ss in subsection_type.subsections.all():
-        issue_ids.add(ss.issue_id)
-    dates = {}
-    filter = models.PubData.id.in_(list(issue_ids))
-    issues = models.PubData.query.filter(filter).all()
-    for i in issues:
-        months = dates.get(i.year, {})
-        days = months.get(i.month, {'days': []})
-        days['days'].append(i.day)
-        months[i.month] = days
-        dates[i.year] = months
-    dates = [{'year': k, 'months': v} for k, v in dates.iteritems()]
-    return jsonify({'subsection': {'id': subsection_id, 'dates': dates}})
+@news.route('/dates')
+def get_dates():
+    return jsonify({'dates': [i.to_json() for i in models.PubData.query.all()]})
+
+
+@news.route('/contentTypes')
+def get_content_types():
+    content_types = [t.to_json() for t in models.ArticleType.query.all()]
+    return jsonify({'contentTypes': content_types})
 
 
 @news.route('/sections')
-def get_section_types():
-    section_types = models.SectionType.query\
-        .filter(not_(models.SectionType.id.in_(IGNORE_SECTIONS)))\
-        .all()
-    return jsonify({'sections': [s.to_json() for s in section_types]})
+def get_sections():
+    date = request.values.get('date')
+    if not date:
+        return jsonify({'status_code': 400,
+                        'error': 'Date is a required param.'})
+    content_type = request.values.get('content_type')
+    if not content_type:
+        return jsonify({'status_code': 400,
+                        'error': 'Content Type is a required param.'})
+    article_type = models.ArticleType.query.get(content_type)
+    if not article_type:
+        return jsonify({'status_code': 404,
+                        'error': 'No content type {}'.format(article_type)})
+    sections = {}
+    for a in article_type.articles.filter_by(issue_id=date).all():
+        tid = a.subsection.type_id
+        section = sections.get(tid, {'id': tid, 'articles': []})
+        section['articles'].append(a.id)
+        sections[tid] = section
+
+    return jsonify({'sections': [v for k, v in sections.iteritems() if v]})
 
 
-@news.route('/sections/<section_id>')
-def get_subsection_types(section_id):
-    section_type = models.SectionType.query.get(section_id)
-    return jsonify({'subsections': section_type.to_json()})
-
-
-@news.route('/issues/<id>')
-def get_issue(id):
-    year, month, day = id.split('-')
-    i = models.PubData.query.filter_by(year=year, month=month, day=day).first()
-    return jsonify({'issue': i.to_json()})
+@news.route('/articles/<id>')
+def get_article(id):
+    article = models.Article.query.get(id)
+    if not article:
+        return jsonify({'status_code': 404, 'error': 'Article Not Found'})
+    return jsonify({'article': article.to_json()})

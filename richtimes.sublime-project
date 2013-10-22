@@ -3,7 +3,7 @@
 	[
 		{
 			"path": "/Users/trevorborg/richtimes",
-      "folder_exclude_patterns": ["node_modules", "env"]
+      "folder_exclude_patterns": ["node_modules", "env", ".tmp"]
 		}
 	]
 }

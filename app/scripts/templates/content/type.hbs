@@ -1,0 +1,60 @@
+<div class="row">
+    <aside class="col-md-3">
+        <ul class="nav nav-pills nav-stacked">
+            {{#each sectionOptions}}
+                <li {{bindAttr class="active"}}>
+                    <a href="#" {{action 'changeSection' this}}>{{text}}</a>
+                </li>
+            {{/each}}
+        </ul>
+    </aside>
+    <div class="col-md-9">
+        <div class="row">
+            <div class="col-md-1">
+                <ul class="pager">
+                    <li class="previous"><a href="#"{{action previousDate}}>&larr;</a></li>
+                </ul>
+            </div>
+            <div class="col-md-10">
+                <ul class="nav nav-pills">
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown">{{year.text}}</a>
+                        <ul class="dropdown-menu">
+                            {{#each date in years}}
+                                <li class="li">
+                                    <a href="#" {{action 'changeDate' date}}>{{date.text}}</a>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown">{{month.text}}</a>
+                        <ul class="dropdown-menu">
+                            {{#each date in months}}
+                                <li class="li">
+                                    <a href="#" {{action 'changeDate' date}}>{{date.text}}</a>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown">{{day.text}}</a>
+                        <ul class="dropdown-menu">
+                            {{#each date in days}}
+                                <li class="li">
+                                    <a href="#" {{action 'changeDate' date}}>{{date.text}}</a>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1">
+                <ul class="pager">
+                    <li class="next"><a href="#"{{action nextDate}}>&rarr;</a></li>
+                </ul>        
+            </div>
+        </div>
+        {{outlet}}
+    </div>
+</div>

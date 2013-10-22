@@ -71,6 +71,6 @@ require.config({
     }
 });
 
-require(['./routes/router'], function () {
+require(['./routes', './models', './controllers', './templates'], function () {
     'use strict';
 });

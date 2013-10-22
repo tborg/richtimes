@@ -1,8 +1,0 @@
-<nav class="navbar navbar-default sections" role="navigation">
-    <ul class="nav navbar-nav">
-        {{#each options}}
-            <li {{bindAttr class="active"}}><a href="#" {{action 'setSectionType' this}}>{{text}}</a></li>
-        {{/each}}
-    </ul>
-</nav>
-{{outlet}}
