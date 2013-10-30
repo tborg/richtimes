@@ -22,3 +22,4 @@ RESTServer.log
 *.sql
 bower_components
 notes.md
+RESTServer*

@@ -11,7 +11,9 @@
         <meta name="viewport" content="width=device-width">
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
         <!-- build:css(.tmp) styles/main.css -->
+        <link href='http://fonts.googleapis.com/css?family=Fjord+One' rel='stylesheet' type='text/css'>
         <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="bower_components/select2/select2.css">
         <!-- endbuild -->
         <!-- build:js scripts/vendor/modernizr.js -->
         <script src="bower_components/modernizr/modernizr.js"></script>
@@ -24,9 +26,11 @@
 
         <script type="text/x-handlebars">
             <div class="container">
-                <div class="header">
-                    <h3>Richmond Daily Dispatch 1860&mdash;1865</h3>
-                </div>
+                <header>
+                    <h3>
+                        <a href="#">Richmond Daily Dispatch 1860&mdash;1865</a>
+                    </h3>
+                </header>
                 <nav class="navbar navbar-default sections" role="navigation">
                     <div class="navbar-header">
                         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -35,11 +39,9 @@
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
                         </button>
-                        <a class="navbar-brand" href="#">Richmond Daily Dispatch</a>
                       </div>
                     <div class="collapse navbar-collapse navbar-ex1-collapse">
                         <ul class="nav navbar-nav">
-                            <li>{{#link-to 'home'}}home{{/link-to}}</li>
                             <li>{{#link-to 'content'}}content{{/link-to}}</li>
                             <li>{{#link-to 'people'}}people{{/link-to}}</li>
                             <li>{{#link-to 'places'}}places{{/link-to}}</li>
@@ -49,7 +51,9 @@
                     </div>
                 </nav>
                 {{outlet}}
+
             </div>
+            <footer><a href="#">top</a></footer>
         </script>
 
 

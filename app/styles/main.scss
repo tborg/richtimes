@@ -89,3 +89,92 @@ body {
         border-bottom: 0;
     }
 }
+
+/*  ****  APP STYLES START HERE  ****  */
+
+.articles {
+    margin-right: 20%;
+}
+
+ul.pager > li > a {
+    font-size: 0.9em;
+    padding: 2px;
+    border: none;
+}
+
+.tei.head {
+    font-family: 'Fjord One', serif;
+    font-size: 1.3em;
+    [data-tei-rend="smallcaps"] {
+        font-weight: bold;
+    }
+}
+
+[data-tei-rend="italics"] {
+    font-style: italic;
+}
+
+p {
+    [data-tei-rend="smallcaps"] {
+        font-size: 0.9em;
+    }
+}
+
+[data-tei-rend="smallcaps"] {
+    font-variant: small-caps;
+}
+
+ul.tei.list {
+    list-style: none;
+    .tei.head {
+        font-size: 1em;
+    }
+}
+
+.tei.div3 {
+    font-family: 'Fjord One', serif;
+}
+
+p.tei.p {
+    padding-left: 2em;
+    font-size: 1.1em;
+    margin-bottom: 0.2em;
+    max-width: 60%;
+    text-align: justify;
+    text-indent: 2em;
+}
+
+.tei.table {
+    max-width: 60%;
+}
+
+ul.pager {
+    margin: 0;
+    label: {
+        font-variant: small-caps;
+    }
+    a {
+        max-width: 50%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}
+
+footer {
+    width: 100%;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+header a {
+    color: black;
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+nav.navbar.navbar-default.sections {
+    background: none;
+    border: none;
+}

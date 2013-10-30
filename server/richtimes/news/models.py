@@ -94,11 +94,15 @@ class PubData(db.Model):
         Get a jsonifiable representation of this table.
         :return: A dictionary of this instance's attributes.
         """
+        subsections = {}
+        for s in self.subsections.all():
+            subsection_type = subsections.get(s.type_id, [])
+            subsection_type.append(s.id)
+            subsections[s.type_id] = subsection_type
+
         return {'id': self.id,
-                'year': self.year,
-                'month': self.month,
-                'day': self.day,
-                'date_text': self.date_text}
+                'date_text': self.date_text,
+                'subsections': subsections}
 
     def get_document_json(self):
         return [s.to_json() for s in self.sections.all()]
@@ -203,7 +207,9 @@ class Subsection(db.Model, BaseIssueNode):
     issue_id = db.Column(db.String(50), db.ForeignKey('pub_data.id'))
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
     type_id = db.Column(db.String(100), db.ForeignKey('subsection_type.id'))
-    articles = db.relationship('Article', backref='subsection', lazy='dynamic')
+    articles = db.relationship('Article',
+                               backref=db.backref('subsection', lazy='joined'),
+                               lazy='dynamic')
 
     def get_articles(self, article_types):
         """
@@ -232,8 +238,14 @@ class Subsection(db.Model, BaseIssueNode):
             db.session.add(s)
 
     def to_json(self):
+        articles = {}
+        for a in self.articles.all():
+            article_type = articles.get(a.type_id, [])
+            article_type.append(a.id)
+            articles[a.type_id] = article_type
         return {'id': self.id,
-                'type': self.type_id}
+                'type': self.type_id,
+                'articles': articles}
 
 
 class SubsectionType(db.Model):
@@ -243,6 +255,10 @@ class SubsectionType(db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.String(100), primary_key=True)
     subsections = db.relationship('Subsection', backref='type', lazy='dynamic')
+
+    def to_json(self):
+        return {'id': self.id,
+                'subsections': [s.id for s in self.subsections.all()]}
 
 
 class Article(db.Model, BaseIssueNode):
@@ -484,6 +500,8 @@ class Article(db.Model, BaseIssueNode):
         """
         return {'id': self.id,
                 'type': self.type_id,
+                'date': self.issue_id,
+                'date_text': self.issue.date_text,
                 'content': self.get_html()}
 
 
@@ -496,7 +514,13 @@ class ArticleType(db.Model):
     articles = db.relationship('Article', backref='type', lazy='dynamic')
 
     def to_json(self):
-        return {'id': self.id}
+        articles = {}
+        for a in self.articles.all():
+            date = articles.get(a.issue_id, [])
+            date.append(a.id)
+            articles[a.issue_id] = date
+        return {'id': self.id,
+                'articles': articles}
 
 
 class PersName(db.Model):

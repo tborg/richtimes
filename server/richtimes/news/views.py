@@ -4,9 +4,6 @@ from richtimes.news import models
 news = Blueprint('news', __name__)
 
 
-IGNORE_SECTIONS = ['page-image', 'subscription', 'advertising']
-
-
 def paginate(q, default=25):
     offset = int(request.values.get('offset', 0))
     if offset:
@@ -17,44 +14,25 @@ def paginate(q, default=25):
     return (q, offset)
 
 
-@news.route('/dates')
-def get_dates():
-    return jsonify({'dates': [i.to_json() for i in models.PubData.query.all()]})
+@news.route('/content', methods=['GET'])
+def content():
+    data = {}
+    for article in models.Article.query.all():
+        category_id = article.subsection.type_id
+        content_type_id = article.type_id
+        issue_id = article.issue_id
+        category = data.get(category_id, {})
+        content_type = category.get(content_type_id, {})
+        issue = content_type.get(issue_id, [])
+        issue.append(article.id)
+        content_type[issue_id] = issue
+        category[content_type_id] = content_type
+        data[category_id] = category
+    return jsonify(data)
 
 
-@news.route('/contentTypes')
-def get_content_types():
-    content_types = [t.to_json() for t in models.ArticleType.query.all()]
-    return jsonify({'contentTypes': content_types})
-
-
-@news.route('/sections')
-def get_sections():
-    date = request.values.get('date')
-    if not date:
-        return jsonify({'status_code': 400,
-                        'error': 'Date is a required param.'})
-    content_type = request.values.get('content_type')
-    if not content_type:
-        return jsonify({'status_code': 400,
-                        'error': 'Content Type is a required param.'})
-    article_type = models.ArticleType.query.get(content_type)
-    if not article_type:
-        return jsonify({'status_code': 404,
-                        'error': 'No content type {}'.format(article_type)})
-    sections = {}
-    for a in article_type.articles.filter_by(issue_id=date).all():
-        tid = a.subsection.type_id
-        section = sections.get(tid, {'id': tid, 'articles': []})
-        section['articles'].append(a.id)
-        sections[tid] = section
-
-    return jsonify({'sections': [v for k, v in sections.iteritems() if v]})
-
-
-@news.route('/articles/<id>')
-def get_article(id):
-    article = models.Article.query.get(id)
-    if not article:
-        return jsonify({'status_code': 404, 'error': 'Article Not Found'})
-    return jsonify({'article': article.to_json()})
+@news.route('/content/articles', methods=['GET'])
+def articles():
+    ids = filter(bool, request.values.get('ids', '').split(','))
+    articles = models.Article.query.filter(models.Article.id.in_(ids)).all()
+    return jsonify({'articles': [a.to_json() for a in articles]})

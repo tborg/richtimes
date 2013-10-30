@@ -18,6 +18,7 @@ require.config({
         jquery: '../bower_components/jquery/jquery',
         handlebars: '../bower_components/handlebars/handlebars',
         lodash: '../bower_components/lodash/dist/lodash',
+        select2: '../bower_components/select2/select2',
         text: '../bower_components/requirejs-text/text'
     },
     shim: {
@@ -67,10 +68,13 @@ require.config({
         },
         lodash: {
             exports: '_'
+        },
+        select2: {
+            deps: ['jquery']
         }
     }
 });
 
-require(['./routes', './models', './controllers', './templates'], function () {
+require(['./app'], function () {
     'use strict';
 });

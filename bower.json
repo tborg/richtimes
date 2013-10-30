@@ -11,7 +11,8 @@
     "ember-data": "http://builds.emberjs.com/canary/ember-data.js",
     "requirejs-text": "~2.0.10",
     "d3": "~3.3.7",
-    "lodash": "~2.2.1"
+    "lodash": "~2.2.1",
+    "select2": "~3.4.4"
   },
   "devDependencies": {}
 }
