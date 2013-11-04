@@ -1,6 +1,6 @@
 /build
 /.tmp
-/xml
+app/xml
 /.sass-cache
 /dist
 /env

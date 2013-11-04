@@ -4,6 +4,11 @@ from os import path
 from build_pub_data import build_pub_data
 from richtimes.news.models import PubData
 from flask.ext.script import Command
+from richtimes.news import models
+import json
+from glob import glob
+from os.path import join, basename
+
 
 def get_etree(fname):
     """
@@ -29,16 +34,66 @@ def drop_and_rebuild_tables():
     THIS IS DANGEROUS! It would be better to use alembic for version control.
     """
     # Import all the models so that the db instance knows what to drop/build.
-    from richtimes.news import models
     db.drop_all()
     db.create_all(bind='richtimes')
+    filenames = glob(join(app.root_path, app.config['XML_DIR'], '*.xml'))
+    for f in filenames:
+        print f
+        issue = PubData(f)
+        print issue.date_text
+        db.session.add(issue)
+        db.session.commit()
 
+
+def build_index():
+    """
+    Constructs a JSON index.
+    """
+    def issues(data, article):
+        issue = data.get(article.date, set())
+        issue.add(article.subsection_type)
+        data[article.date] = issue
+        return issue
+
+    def sections(data, article):
+        if not article.subsection_type:
+            return
+        sections = data.get(article.subsection_type, set())
+        sections.add(article.date)
+        data[article.subsection_type] = sections
+        return sections
+
+    def jsonify(data):
+        return json.dumps({k: list(v) for k, v in data.iteritems()})
+
+    by_issue = {}
+    by_section = {}
+    basepath = path.join(app.root_path, app.config['JSON_DIR'])
+    issues_path = path.join(basepath, 'issues.json')
+    sections_path = path.join(basepath, 'sections.json')
+    for article in models.Article.query.all():
+        if article.article_type is 'ad-blank':
+            continue
+        print '\t\t\t\\/'
+        issues(by_issue, article)
+        sections(by_section, article)
+
+    with open(path.join(issues_path), 'w') as fout:
+        fout.write(jsonify(by_issue))
+        print 'wrote ' + issues_path
+    with open(path.join(sections_path), 'w') as fout:
+        fout.write(jsonify(by_section))
+        print 'wrote ' + sections_path
 
 class Rebuild(Command):
 
     def run(self):
         drop_and_rebuild_tables()
-        build_pub_data()
+
+class Index(Command):
+
+    def run(self):
+        build_index()
 
 
 def make_shell_context():
@@ -52,4 +107,5 @@ def make_shell_context():
             'get_etree': get_etree,
             'build_pub_data': build_pub_data,
             'drop_and_rebuild_tables': drop_and_rebuild_tables,
-            'PubData': PubData}
+            'PubData': PubData,
+            'build_index': build_index}

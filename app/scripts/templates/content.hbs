@@ -1,27 +1,24 @@
-<div class="row">
-    <div class="col-md-4 categories">
-        <label for="">Category</label>
-        <ul class="pager">
-            <li {{bindAttr class=":previous prevCategory::disabled"}}><a href="#" {{action prev 'category'}}>&larr; {{prevCategory}}</a></li>
-            <li {{bindAttr class=":next nextCategory::disabled"}}><a href="#" {{action next 'category'}}>{{nextCategory}} &rarr;</a></li>
-        </ul>
-        <input type="hidden" style="width:100%;">
+<nav>
+    <div class="row root-toggle">
+        {{#link-to 'content' alternateRoot}}browse by {{alternateRoot}}{{/link-to}}
     </div>
-    <div class="col-md-4 content-types">
-        <label for="">Content Type</label>
-        <ul class="pager">
-            <li {{bindAttr class=":previous prevContentType::disabled"}}><a href="#" {{action prev 'contentType'}}>&larr; {{prevContentType}}</a></li>
-            <li {{bindAttr class=":next nextContentType::disabled"}}><a href="#" {{action next 'contentType'}}>{{nextContentType}} &rarr;</a></li>
-        </ul>        
-        <input type="hidden" style="width:100%;">
+    <div class="row">
+        {{#each selectors}}
+            <div class="col-md-6">
+                {{paged-select2 type=type
+                                value=value
+                                options=options
+                                nextText=next
+                                prevText=prev
+                                style="width: 100%;"
+                                select="changeFocus"}}
+            </div>
+        {{/each}}
     </div>
-    <div class="col-md-4 issues">
-        <label for="">Date</label>
-        <ul class="pager">
-            <li {{bindAttr class=":previous prevIssue::disabled"}}><a href="#" {{action prev 'issue'}}>&larr; {{prevIssue}}</a></li>
-            <li {{bindAttr class=":next nextIssue::disabled"}}><a href="#" {{action next 'issue'}}>{{nextIssue}} &rarr;</a></li>
-        </ul>
-        <input type="hidden" style="width:100%;">
-    </div>
+</nav>
+<div class="row loading-container">
+    {{view LoadingView}}
 </div>
-{{outlet}}
+{{#unless isLoading}}
+    {{outlet}}
+{{/unless}}

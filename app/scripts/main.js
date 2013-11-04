@@ -19,6 +19,7 @@ require.config({
         handlebars: '../bower_components/handlebars/handlebars',
         lodash: '../bower_components/lodash/dist/lodash',
         select2: '../bower_components/select2/select2',
+        spin: '../bower_components/spin.js/dist/spin',
         text: '../bower_components/requirejs-text/text'
     },
     shim: {

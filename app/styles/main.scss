@@ -93,7 +93,7 @@ body {
 /*  ****  APP STYLES START HERE  ****  */
 
 .articles {
-    margin-right: 20%;
+    margin-left: 4em;
 }
 
 ul.pager > li > a {
@@ -116,7 +116,7 @@ ul.pager > li > a {
 
 p {
     [data-tei-rend="smallcaps"] {
-        font-size: 0.9em;
+        font-size: 1.1em;
     }
 }
 
@@ -139,13 +139,13 @@ p.tei.p {
     padding-left: 2em;
     font-size: 1.1em;
     margin-bottom: 0.2em;
-    max-width: 60%;
+    max-width: 80%;
     text-align: justify;
-    text-indent: 2em;
+    text-indent: 1em;
 }
 
 .tei.table {
-    max-width: 60%;
+    max-width: 80%;
 }
 
 ul.pager {
@@ -161,20 +161,22 @@ ul.pager {
     }
 }
 
+.root-toggle a {
+    float: right;
+    margin-right: 2em;
+}
+
 footer {
     width: 100%;
     text-align: center;
     font-size: 0.8em;
 }
 
-header a {
+
+
+a {
     color: black;
     &:hover {
         text-decoration: none;
     }
-}
-
-nav.navbar.navbar-default.sections {
-    background: none;
-    border: none;
 }
