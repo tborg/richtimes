@@ -45,6 +45,13 @@ def drop_and_rebuild_tables():
         db.session.commit()
 
 
+def build_repo(dir):
+    for i in PubData.query.all():
+        with open(join(app.root_path, dir, '{}-{}.xml'.format(i.id, i.date)), 'w') as fout:
+            fout.write(etree.tostring(i.get_etree(), pretty_print=True))
+
+
+
 def build_index():
     """
     Constructs a JSON index.
@@ -108,4 +115,5 @@ def make_shell_context():
             'build_pub_data': build_pub_data,
             'drop_and_rebuild_tables': drop_and_rebuild_tables,
             'PubData': PubData,
-            'build_index': build_index}
+            'build_index': build_index,
+            'build_repo': build_repo}

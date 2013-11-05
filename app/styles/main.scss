@@ -161,6 +161,17 @@ ul.pager {
     }
 }
 
+nav .nav-pills {
+    margin-top: 1em;
+    li {
+        padding: 1em;
+        a {
+            padding: 0.4em;
+        }
+    }
+    border-bottom: 1px solid black;
+}
+
 .root-toggle a {
     float: right;
     margin-right: 2em;
@@ -171,8 +182,6 @@ footer {
     text-align: center;
     font-size: 0.8em;
 }
-
-
 
 a {
     color: black;

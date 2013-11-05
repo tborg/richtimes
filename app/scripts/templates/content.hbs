@@ -15,6 +15,13 @@
             </div>
         {{/each}}
     </div>
+    <ul class="subjects nav nav-pills">
+        {{#each subjects}}
+            <li {{bindAttr class="active"}}>
+                <a href="#" {{action changeSubject this}}>{{text}}</a>
+            </li>
+        {{/each}}
+    </ul>
 </nav>
 <div class="row loading-container">
     {{view LoadingView}}

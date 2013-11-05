@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "directory": "app/bower_components",
   "dependencies": {
+    "richtimes-xml": "https://github.com/tborg/richtimes-xml.git",
     "sass-bootstrap": "~3.0.0",
     "requirejs": "~2.1.8",
     "modernizr": "~2.6.2",

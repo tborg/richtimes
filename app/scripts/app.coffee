@@ -81,11 +81,11 @@ define (require) ->
 
   App.Router.map () ->
     @resource 'content', {path: '/:root/:section/:issue'}, ->
-      @route 'articles', {path: '/articles'}
+      @route 'articles'
       @route 'people'
       @route 'places'
-      @route 'orgs'
-      @route 'things'
+      @route 'organizations'
+      @route 'keywords'
     @route 'missing', {path: '/*path'}
 
   # ROUTES
@@ -105,7 +105,7 @@ define (require) ->
 
   # # CONTENT
   App.ContentRoute = Ember.Route.extend
-    model: (params) ->
+    model: (params, transition) ->
       controller = @controllerFor 'content'
       if not (params.root in ROOTS)
         params.root = ROOTS[0]
@@ -124,6 +124,13 @@ define (require) ->
       if routeIsTarget(transition, @)
         if model.section and model.issue
           @transitionTo 'content.articles', model
+      else
+        controller = @controllerFor 'content'
+        subjects = controller.get 'subjects'
+        target = subjects.filter((d) ->
+          transition.targetName.match d.text
+        )[0].text
+        controller.set 'subject', target
 
   # # CONTENT - > ARTICLES
   App.ContentArticlesRoute = Ember.Route.extend
@@ -139,6 +146,20 @@ define (require) ->
     LoadingView: require('lib/loadingSpinnerView').extend
       options:
         top: '100px'
+
+    subjects: (() ->
+      subject = @get 'subject'
+      [
+        'articles'
+        'people'
+        'places'
+        'organizations'
+        'keywords'
+      ].map((d) ->
+        text: d
+        active: d is subject
+      )
+    ).property('subject')
 
     init: () ->
       @_super()
@@ -181,7 +202,11 @@ define (require) ->
           @set 'index', (index = @get('%@Index'.fmt type).page value)
           if not ((child = @get 'alternateRoot') in index.childOptions)
             @set child, index.childOptions[0]
-        @transitionTo 'content.%@'.fmt(@get 'subject'), @get('content'), 
+        @transitionToRoute 'content.%@'.fmt(@get 'subject'), @get('content')
+
+      changeSubject: ({text}) ->
+        @set 'subject', text
+        @transitionToRoute 'content.%@'.fmt(text), @get('content')
 
   # # CONTENT - > ARTICLES
   App.ContentArticlesController = Ember.ArrayController.extend
