@@ -2,7 +2,7 @@ define (require) ->
   Spinner = require 'spin'
   Ember = require 'ember'
 
-  Ember.View.extend
+  Ember.Component.extend
     classNames: ['loading-spinner']
     classNameBindings: ['isLoading']
 
@@ -23,14 +23,14 @@ define (require) ->
       top: 'auto' # Top position relative to parent in px
       left: 'auto' # Left position relative to parent in px
 
-    isLoadingBinding: 'controller.isLoading'
+    isLoading: false
 
     didInsertElement: () ->
       @_super()
-      @node = @$()[0]
+      @node = @$('.spinner')[0]
       options = Ember.Object.create(@get('_options'), @get('options'))
       @spinner = new Spinner(options)
-      @spinner.stop()
+      if @get 'isLoading' then @spinner.spin(@node)
 
     isLoadingChanged: (() ->
       isLoading = @get 'isLoading'

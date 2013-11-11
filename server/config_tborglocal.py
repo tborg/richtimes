@@ -12,7 +12,5 @@ class Config(CommonConfig):
 
     APP_ROOT_FROM_MAIN = '../../'
 
-    DEV_STATIC_APP_DIR = APP_ROOT_FROM_MAIN + 'app'
-    DEV_STATIC_TMP_DIR = APP_ROOT_FROM_MAIN + '.tmp'
-    XML_DIR = DEV_STATIC_APP_DIR + '/bower_components/richtimes-xml'
-    JSON_DIR = DEV_STATIC_APP_DIR + '/json'
+    XML_DIR = APP_ROOT_FROM_MAIN + '/bower_components/richtimes-xml'
+    JSON_DIR = APP_ROOT_FROM_MAIN + '/app/json'

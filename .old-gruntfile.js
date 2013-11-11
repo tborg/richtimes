@@ -16,7 +16,8 @@ module.exports = function (grunt) {
     // configurable paths
     var yeomanConfig = {
         app: 'app',
-        dist: 'dist'
+        dist: 'dist',
+        build: 'build',
     };
 
     grunt.initConfig({
@@ -24,7 +25,7 @@ module.exports = function (grunt) {
         watch: {
             coffee: {
                 files: ['<%= yeoman.app %>/scripts/**/*.coffee'],
-                tasks: ['coffee:dist']
+                tasks: ['coffee:build']
             },
             coffeeTest: {
                 files: ['test/spec/**/*.coffee'],
@@ -44,8 +45,8 @@ module.exports = function (grunt) {
                 },
                 files: [
                     '<%= yeoman.app %>/*.html',
-                    '.tmp/styles/**/*.css',
-                    '{.tmp,<%= yeoman.app %>}/scripts/**/*.js',
+                    '<%= yeoman.build %>/styles/**/*.css',
+                    '{<%= yeoman.build %>,<%= yeoman.app %>}/scripts/**/*.js',
                     '<%= yeoman.app %>/images/**/*.{png,jpg,jpeg,gif,webp,svg}'
                 ]
             }
@@ -61,7 +62,7 @@ module.exports = function (grunt) {
                 options: {
                     open: true,
                     base: [
-                        '.tmp',
+                        '<%= yeoman.build %>',
                         yeomanConfig.app
                     ]
                 }
@@ -69,7 +70,7 @@ module.exports = function (grunt) {
             test: {
                 options: {
                     base: [
-                        '.tmp',
+                        '<%= yeoman.build %>',
                         'test',
                         yeomanConfig.app,
                     ]
@@ -83,17 +84,22 @@ module.exports = function (grunt) {
             }
         },
         clean: {
+            build: {
+                files: [{
+                    dot: true,
+                    src: ['<%= yeoman.build %>']
+                }]
+            },
             dist: {
                 files: [{
                     dot: true,
                     src: [
-                        '.tmp',
-                        '<%= yeoman.dist %>/*',
+                        '<%= yeoman.dist %>/**/*',
                         '!<%= yeoman.dist %>/.git*'
                     ]
                 }]
             },
-            server: '.tmp'
+            server: '<%= yeoman.build %>'
         },
         jshint: {
             options: {
@@ -115,12 +121,12 @@ module.exports = function (grunt) {
             }
         },
         coffee: {
-            dist: {
+            build: {
                 files: [{
                     expand: true,
                     cwd: '<%= yeoman.app %>/scripts',
                     src: '**/*.coffee',
-                    dest: '.tmp/scripts',
+                    dest: '<%= yeoman.build %>/scripts',
                     ext: '.js'
                 }]
             },
@@ -129,7 +135,7 @@ module.exports = function (grunt) {
                     expand: true,
                     cwd: 'test/spec',
                     src: '**/*.coffee',
-                    dest: '.tmp/spec',
+                    dest: '<%= yeoman.build %>/spec',
                     ext: '.js'
                 }]
             }
@@ -137,8 +143,8 @@ module.exports = function (grunt) {
         compass: {
             options: {
                 sassDir: '<%= yeoman.app %>/styles',
-                cssDir: '.tmp/styles',
-                generatedImagesDir: '.tmp/images/generated',
+                cssDir: '/styles',
+                generatedImagesDir: '<%= yeoman.build %>/images/generated',
                 imagesDir: '<%= yeoman.app %>/images',
                 javascriptsDir: '<%= yeoman.app %>/scripts',
                 fontsDir: '<%= yeoman.app %>/styles/fonts',
@@ -166,9 +172,9 @@ module.exports = function (grunt) {
             dist: {
                 files: [{
                     expand: true,
-                    cwd: '.tmp/styles/',
+                    cwd: '.build/styles/',
                     src: '**/*.css',
-                    dest: '.tmp/styles/'
+                    dest: '.build/styles/'
                 }]
             }
         },
@@ -182,7 +188,7 @@ module.exports = function (grunt) {
                 // Options: https://github.com/jrburke/r.js/blob/master/build/example.build.js
                 options: {
                     // `name` and `out` is set by grunt-usemin
-                    baseUrl: yeomanConfig.app + '/scripts',
+                    baseUrl: yeomanConfig.build + '/scripts',
                     optimize: 'none',
                     // TODO: Figure out how to make sourcemaps work with grunt-usemin
                     // https://github.com/yeoman/grunt-usemin/issues/30
@@ -246,12 +252,12 @@ module.exports = function (grunt) {
             // blocks for your CSS. By default, the Usemin block from your
             // `index.html` will take care of minification, e.g.
             //
-            //     <!-- build:css({.tmp,app}) styles/main.css -->
+            //     <!-- build:css({.build,app}) styles/main.css -->
             //
             // dist: {
             //     files: {
             //         '<%= yeoman.dist %>/styles/main.css': [
-            //             '.tmp/styles/**/*.css',
+            //             '.build/styles/**/*.css',
             //             '<%= yeoman.app %>/styles/**/*.css'
             //         ]
             //     }
@@ -280,6 +286,15 @@ module.exports = function (grunt) {
         },
         // Put files not handled in other tasks here
         copy: {
+            build: {
+                files: [{
+                    expand: true,
+                    dot: true,
+                    cwd: '<%= yeoman.app %>',
+                    dest: '<%= yeoman.build %>',
+                    src: ['/scripts/**/*.js', '/scripts/']
+                }]
+            },
             dist: {
                 files: [{
                     expand: true,
@@ -299,7 +314,7 @@ module.exports = function (grunt) {
                 expand: true,
                 dot: true,
                 cwd: '<%= yeoman.app %>/styles',
-                dest: '.tmp/styles/',
+                dest: '.build/styles/',
                 src: [
                     '**/*.css',
                     'bower_components/select2/select2.css'
@@ -330,6 +345,7 @@ module.exports = function (grunt) {
                 'coffee',
                 'compass',
                 'copy:styles',
+                'copy:build',
                 'imagemin',
                 'svgmin',
                 'htmlmin'

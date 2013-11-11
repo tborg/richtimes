@@ -10,14 +10,12 @@ if __name__ == '__main__':
 
     from richtimes import app
     from richtimes.news.views import news
-    from dev_static import dev_static
-    from flask import send_from_directory
+    from flask import redirect, url_for
 
-    app.register_blueprint(dev_static)
     app.register_blueprint(news)
 
     @app.route('/')
     def index():
-        return send_from_directory(app.root_path + '/../../app', 'index.html')
+        return redirect(url_for('static', filename='index.html'))
 
     app.run(debug=True, host=args.host, port=args.port)

@@ -8,15 +8,19 @@ define (require) ->
   # CONSTANTS
 
   ROOTS = ['section', 'issue']
+  SUBJECTS = ['people', 'places', 'organizations', 'keywords']
 
   # TEMPLATES
 
   templates = [
     {name: 'index', hbs: require 'text!./templates/index.hbs'}
-    {name: 'content', hbs: require 'text!./templates/content.hbs'}
-    {name: 'content/articles', hbs: require 'text!./templates/articles.hbs'}
+    {name: 'browse', hbs: require 'text!./templates/browse.hbs'}
+    {name: 'browse/section', hbs: require 'text!./templates/section.hbs'}
+    {name: 'search', hbs: require 'text!./templates/search.hbs'}
 
+    {name: 'components/token-collector', hbs: require 'text!./templates/components/tokenCollector.hbs'}
     {name: 'components/paged-select2', hbs: require 'text!./templates/components/pagedSelect2.hbs'}
+    {name: 'components/loading-spinner', hbs: require 'text!./templates/components/loadingSpinner.hbs'}
   ]
 
   for {name, hbs} in templates
@@ -39,23 +43,30 @@ define (require) ->
     [_y, _m, _d] = b.split('-').map((d) -> parseInt(d, 10))
     d3.ascending(y, _y) or d3.ascending(m, _m) or d3.ascending(d, _d)
 
-  read = (path, paramsGetter) -> (params, opts={}) ->
+  read = (path, paramsGetter) -> (opts={}) ->
     if @_cancelRead then @_cancelRead()
     read = new Ember.RSVP.Promise (resolve, reject) =>
       @set 'isLoading', true
       @_cancelRead = reject
-      endpoint = path.fmt.apply path, paramsGetter.apply @, [params, opts]
+      pathParams = paramsGetter.call @, opts
+      if pathParams is null then return
+      endpoint = path.fmt.apply path, pathParams
       $.getJSON(endpoint, opts).then(
         (content) =>
-          @cancelRead = null
+          @_cancelRead = null
           if not ((content.status_code or 200) in [200, 201]) then reject content
           resolve content.data
           @set 'isLoading', false
         (error) =>
           @set 'isLoading', false
-          @cancelRead = null
+          @_cancelRead = null
           reject error
       )
+
+  bySectionGetter = (params, opts) ->
+    {issue, section} = @get('controllers.browse')
+      .getProperties(['issue', 'section'])
+    [issue, section]
 
   index = (rootName, childName, data) ->
     sorts =
@@ -72,6 +83,22 @@ define (require) ->
       page: (key) -> focus key
     focus options[0]
 
+  select2Query = ({term, callback, page}) ->
+    get_options = (opts) ->
+      opts.filter((d) ->
+        if d.children
+          text: d.text, children: get_options d.children
+        else
+          (d.text or d).toLowerCase().match term
+      )
+    options = get_options @get('options')
+    results = 
+      results: options
+        .slice((page - 1) * 10, page * 10)
+        .map((d) -> if d.text then d else text: d, id: d)
+      more: options.length > page * 10
+    callback results
+
   # APPLICATION
 
   App = Ember.Application.create
@@ -80,12 +107,9 @@ define (require) ->
   # ROUTER
 
   App.Router.map () ->
-    @resource 'content', {path: '/:root/:section/:issue'}, ->
-      @route 'articles'
-      @route 'people'
-      @route 'places'
-      @route 'organizations'
-      @route 'keywords'
+    @resource 'browse', {path: '/:root/:section/:issue'}, ->
+      @route 'section'
+    @resource 'search'
     @route 'missing', {path: '/*path'}
 
   # ROUTES
@@ -101,12 +125,12 @@ define (require) ->
   App.IndexRoute = Ember.Route.extend
     afterModel: (m, transition) ->
       if routeIsTarget transition, @
-        @transitionTo 'content'
+        @transitionTo 'browse'
 
-  # # CONTENT
-  App.ContentRoute = Ember.Route.extend
+  # # BROWSE
+  App.BrowseRoute = Ember.Route.extend
     model: (params, transition) ->
-      controller = @controllerFor 'content'
+      controller = @controllerFor 'browse'
       if not (params.root in ROOTS)
         params.root = ROOTS[0]
       controller.set 'root', root = params.root
@@ -123,51 +147,98 @@ define (require) ->
     afterModel: (model, transition) ->
       if routeIsTarget(transition, @)
         if model.section and model.issue
-          @transitionTo 'content.articles', model
-      else
-        controller = @controllerFor 'content'
-        subjects = controller.get 'subjects'
-        target = subjects.filter((d) ->
-          transition.targetName.match d.text
-        )[0].text
-        controller.set 'subject', target
+          @transitionTo 'browse.section', model
 
-  # # CONTENT - > ARTICLES
-  App.ContentArticlesRoute = Ember.Route.extend
+    actions:
+      toggleDetails: (d) ->
+        @controllerFor('browse').toggleProperty('showDetails')
+
+
+
+  # # BROWSE - > SECTION
+  App.BrowseSectionRoute = Ember.Route.extend
     model: (params) ->
-      @controllerFor('contentArticles').read()
+      @controllerFor('browseSection').read()
 
-  # CONROLLERS
+    setupController: (controller, model) ->
+      @_super(controller, model)
+      # consolidate the article entities into one nested select2-ready array.
 
-  # # CONTENT
-  App.ContentController = Ember.ObjectController.extend
-    subject: 'articles'
+      prep = (key, arr) ->
+        _.unique arr.map (d) ->
+          id: JSON.stringify({type: key, text: d})
+          text: d
+
+      related = SUBJECTS.map((k) ->
+        text: k
+        children: prep k, _.flatten model.getEach('related.%@'.fmt k)
+      )
+
+      @controllerFor('browse')
+        .set('tokenCollectorOptions', related)
+
+  # # SEARCH
+  App.SearchRoute = Ember.Route.extend
+    model: () ->
+      try
+        @controllerFor('browse')
+          .get('tokenCollectorValue')
+      catch e
+        # the browse route hasn't been entered yet / thats ok ...
+        {}
+
+    setupController: (controller, model) ->
+      if Ember.isEmpty(model)
+        try
+          model = @controllerFor('browse')
+            .get('tokenCollectorValue')
+        catch e
+          model = {}
+      @_super(controller, model)
+
+    actions:
+      goToSection: (root, issue, section) ->
+        model = {root, issue, section}
+        browseController = @controllerFor('browse')
+        browseController.set 'root', root
+        alternateRoot = browseController.get 'alternateRoot'
+        browseController.send 'changeFocus', type: root, value: model[root]
+        browseController.send 'changeFocus', type: alternateRoot, value: model[alternateRoot]
+  # CONTROLLERS
+
+  # # BROWSE
+  App.BrowseController = Ember.ObjectController.extend
     index: null
-    LoadingView: require('lib/loadingSpinnerView').extend
-      options:
-        top: '100px'
+    noTokens: Ember.computed.empty('tokenCollectorValue')
+    loadingSpinnerOptions:
+      top: '100px'
+
+    showDetails: false
+
+    showDetailsIconClass: (() ->
+      'glyphicon-eye-%@'.fmt if @get('showDetails') then 'open' else 'close'
+    ).property('showDetails')
 
     subjects: (() ->
-      subject = @get 'subject'
-      [
-        'articles'
-        'people'
-        'places'
-        'organizations'
-        'keywords'
-      ].map((d) ->
+      activeSubjects = @get 'activeSubjects'
+      SUBJECTS.map((d) ->
         text: d
-        active: d is subject
+        active: d in activeSubjects
       )
-    ).property('subject')
+    ).property('activeSubjects')
+
+    activeSubjects: null
 
     init: () ->
       @_super()
       @set 'content', {}
+      @set 'activeSubjects', []
       @set 'sectionIndex', index 'section', 'issue',
         JSON.parse require 'text!../json/sections.json'
       @set 'issueIndex', index 'issue', 'section',
         JSON.parse require 'text!../json/issues.json'
+      @set 'index', @get 'issueIndex'
+      window.z = @
 
     selectors: (() ->
       index = @get('index')
@@ -196,26 +267,92 @@ define (require) ->
     ).property('root')
 
     actions:
+      onEntityQuery: ({term, callback, page}) ->
+        get_options = (opts) ->
+          opts.filter((d) ->
+            if d.children
+              text: d.text, children: get_options d.children
+            else
+              (d.text or d).toLowerCase().match term
+          )
+        options = get_options @get('tokenCollectorOptions')
+        results = 
+          results: options
+            .slice((page - 1) * 10, page * 10)
+          more: options.length > page * 10
+        callback results
+
       changeFocus: ({type, value}) ->
         @set type, value
         if type is @get 'root'
           @set 'index', (index = @get('%@Index'.fmt type).page value)
           if not ((child = @get 'alternateRoot') in index.childOptions)
             @set child, index.childOptions[0]
-        @transitionToRoute 'content.%@'.fmt(@get 'subject'), @get('content')
+        @transitionToRoute 'browse.section', @get('content')
 
       changeSubject: ({text}) ->
-        @set 'subject', text
-        @transitionToRoute 'content.%@'.fmt(text), @get('content')
+        activeSubjects = @get 'activeSubjects'
+        wasActive = (d) -> d in activeSubjects
+        if wasActive text
+          setval = activeSubjects.filter((d) -> d isnt text)
+        else
+          setval = activeSubjects.concat([text])
+        isActive = (d) -> d in setval
+        highlighted = (props, d) -> props[d] = isActive d; props
+        @set 'activeSubjects', setval
+        @setProperties SUBJECTS.reduce highlighted, {}
 
-  # # CONTENT - > ARTICLES
-  App.ContentArticlesController = Ember.ArrayController.extend
-    needs: ['content']
-    isLoadingBinding: 'controllers.content.isLoading'
-    read: read 'articles/%@/%@', (params, opts) ->
-      {issue, section} = @get('controllers.content')
-        .getProperties(['issue', 'section'])
-      [issue, section]
+      updateTokenCollector: (d) ->
+        @set 'tokenCollectorValue', d.value
+
+
+
+  # # BROWSE - > SECTION
+  App.BrowseSectionController = Ember.ArrayController.extend
+    needs: ['browse']
+    isLoadingBinding: 'controllers.browse.isLoading'
+    tokenCollectorValueBinding: 'controllers.browse.tokenCollectorValue'
+    showDetailsBinding: 'controllers.browse.showDetails'
+    read: read '/articles/%@/%@', bySectionGetter
+
+  # # SEARCH
+  App.SearchController = Ember.ObjectController.extend
+    read: read '/related-articles', () -> []
+    loadingSpinnerOptions:
+      top: '100px'
+
+    contentChanged: (() ->
+      searchTerms = @get('content').map(JSON.parse, JSON)
+      unless Ember.isEmpty searchTerms
+        params = d3.nest().key((d) -> d.type).entries(searchTerms)
+          .reduce(
+            (a, b) ->
+              a[b.key] = (a[b.type] or '') + b.values.getEach('text').join(';')
+              a
+            {}
+          )
+        @read(params).then((articles) =>
+          @set 'articles', d3.nest()
+            .key((d) -> d.date)
+            .key((d) -> d.subsection)
+            .entries(articles)
+        )
+    ).observes('content')
+
+    searchSuggestionsQuery:
+      url: '/suggestions'
+      dataType: 'json'
+      quitMillis: 500
+      cache: true
+      data: (term, page) -> {term, page}
+      results: (data) ->
+        results: data.data
+        more: data.more
+
+    actions:
+      changeContent: (d) -> @set 'content', d.value
+
+    readSearchSuggestions: read '/suggestions', () -> []
 
   # VIEWS
 
@@ -226,7 +363,121 @@ define (require) ->
       @$('footer a').click(() -> $('body').animate(scrollTop: '0'); false)
 
 
+  # # BROWSE
+  App.BrowseView = Ember.View.extend
+    classNames: ['browse', 'highlight']
+    classNameBindings: SUBJECTS.map(String.prototype.fmt, 'controller.%@')
+    didInsertElement: () ->
+      @_super()
+      @get('controller.activeSubjects')
+        .forEach (d) => @controller.set(d, true)
+
+
+  # # BROWSE - > SECTION
+  App.BrowseSectionView = Ember.View.extend
+    click: (event) ->
+      controller = @get 'controller'
+      tokenCollectorValue = $.makeArray controller.get('tokenCollectorValue')
+      setval = null
+      clean = (str) -> (str or '').toLowerCase().trim()
+      _id = (type, text) -> JSON.stringify type: type, text: text
+      handlers =
+        persName: (target) ->
+          if (n = clean target.getAttribute('data-tei-n')) and target.getAttribute('data-tei-reg')
+            if not (n in tokenCollectorValue)
+              setval = tokenCollectorValue.concat [_id('people', n)]
+        placeName: (target) ->
+          if (reg = clean target.getAttribute('data-tei-reg')) and target.getAttribute('data-tei-key')
+            if not (reg in tokenCollectorValue)
+              setval = tokenCollectorValue.concat [_id('places', reg)]
+        orgName: (target) ->
+          if (n = clean target.getAttribute('data-tei-n')) and target.getAttribute('data-tei-type')
+            if not (n in tokenCollectorValue)
+              setval = tokenCollectorValue.concat [_id('organizations', n)]
+        rs: (target) ->
+          if (reg = clean target.getAttribute('data-tei-reg')) and target.getAttribute('data-tei-type')
+            if not (reg in tokenCollectorValue)
+              setval = tokenCollectorValue.concat [_id('keywords', reg)]
+
+      cls = event.target.getAttribute('class') or ''
+      if cls.match 'tei'
+        teiElement = cls.split(' ')[1]
+        if handlers[teiElement]
+          handlers[teiElement] event.target
+        else if (parent = $(event.target).parents('.persName, .placeName, .orgName, .rs')[0])
+          teiElement = parent.getAttribute('class').split(' ')[1]
+          handlers[teiElement] parent
+      if setval
+        console.log setval
+        controller.set 'controllers.browse.tokenCollectorValue', setval
+        if not controller.get('showDetails')
+          controller.toggleProperty 'showDetails'
+
   # COMPONENTS
+
+  App.LoadingSpinnerComponent = require('lib/loadingSpinner')
+
+  # # SELECT2 TOKEN COLLECTOR
+
+  App.TokenCollectorComponent = Ember.Component.extend
+    value: null
+    placeholder: null
+    onQuery: null
+    style: 'width:100%'
+    separator: ';'
+    minimumInputLength: 0
+    maximumSelectionSize: 10
+    multiple: true
+
+    update: (e) ->
+      @sendAction 'changed', value: e.val
+
+    didInsertElement: () ->
+      @_super()
+      @setup()
+
+    query: (context) ->
+      @sendAction 'onQuery', context
+
+    setup: () ->
+      maximumSelectionSize = @get 'maximumSelectionSize'
+      minimumInputLength = @get 'minimumInputLength'
+      options = @getProperties [
+        'maximumSelectionSize'
+        'minimumInputLength'
+        'multiple'
+        'separator'
+        'placeholder'
+      ]
+      options.initSelection = _.bind @initSelection, @
+      if @ajax
+        options.ajax = @ajax
+      else
+        options.query = _.bind @query, @
+
+      update = _.bind @update, @
+      @select2 = @$('input')
+        .select2(options)
+        .select2('val', @get 'value')
+        .on('change', update)
+
+    willDestroyElement: () ->
+      if @select2 then @select2
+        .off('change')
+        .select2('destroy')
+      @_super()
+
+    initSelection: (el, callback) ->
+      values = @get 'value'
+      callback values.map (id) -> id: id, text: JSON.parse(id).text
+
+    valueChanged: (() ->
+      if not @select2 then return
+      value = @get 'value'
+      selectorVal = @select2.select2 'val'
+      # lodash for deep comparison of arrays.
+      if not _.isEqual(selectorVal, value) then @select2.select2 'val', value
+    ).observes('value')
 
   # # PAGED SELECT 2
   App.PagedSelect2Component = Ember.Component.extend
@@ -235,16 +486,6 @@ define (require) ->
         @sendAction 'select', {type: @get('type'), value: @get('nextText')}
       prev: () ->
         @sendAction 'select', {type: @get('type'), value: @get('prevText')}
-
-    query: ({term, callback, page}) ->
-      options = @get('options')
-        .filter((d) -> d.toLowerCase().match term)
-      results = 
-        results: options
-          .slice((page - 1) * 10, page * 10)
-          .map((d) -> text: d, id: d)
-        more: options.length > page * 10
-      callback results
 
     update: (e) ->
       @sendAction 'select', {type: @get('type'), value: e.val}
@@ -262,11 +503,10 @@ define (require) ->
 
     didInsertElement: () ->
       @_super()
-      query = _.bind @query, @
+      query = _.bind select2Query, @
       initSelection = _.bind @initSelection, @
       update = _.bind @update, @
-      containerCssClass = '%@-select-container'.fmt @get 'type'
-      @select2 = @$('input').select2({query, initSelection, containerCssClass})
+      @select2 = @$('input').select2({query, initSelection})
         .on('change', update)
 
     willDestroyElement: () ->

@@ -153,13 +153,18 @@ class Article(db.Model, BaseIssueNode):
         Get a jsonifiable representation of this table.
         :return: A dictionary of this instance's attributes.
         """
+        related = {'people': list(set([p.n for p in self.people.all()])),
+                   'places': list(set([p.reg for p in self.places.all()])),
+                   'organizations': list(set([o.n for o in self.orgs.all()])),
+                   'keywords': list(set([k.reg for k in self.ref_strings.all()]))}
         return {'id': self.id,
                 'date': self.date,
                 'section': self.section_type,
                 'subsection': self.subsection_type,
                 'article_type': self.article_type,
                 'xpath': self.xpath,
-                'content': self.content}
+                'content': self.content,
+                'related': related}
 
 
 class BaseArticleEntity:
@@ -180,6 +185,13 @@ class BaseArticleEntity:
                 return
             setattr(self, dest, val.lower().strip())
 
+    def to_json(self):
+        ret = {'article_id': self.article_id,
+               'date': self.date}
+        for k in self.attrib.keys():
+            ret[k] = getattr(self, k)
+        return ret
+
 
 class PersName(BaseArticleEntity, db.Model):
     __bind_key__ = 'richtimes'
@@ -190,7 +202,7 @@ class PersName(BaseArticleEntity, db.Model):
     """
     id = db.Column(db.Integer(), primary_key=True)
     article_id = db.Column(db.Integer(), db.ForeignKey('article.id'))
-    n = db.Column(db.String(100))
+    n = db.Column(db.String(100), index=True)
     reg = db.Column(db.String(200))
     element_id = db.Column(db.String(100))
     ok = True
@@ -203,7 +215,7 @@ class PlaceName(BaseArticleEntity, db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.Integer(), primary_key=True)
     article_id = db.Column(db.Integer(), db.ForeignKey('article.id'))
-    key = db.Column(db.String(100))
+    key = db.Column(db.String(100), index=True)
     reg = db.Column(db.String(200))
     ok = True
     attrib = {'key': True,
@@ -214,8 +226,8 @@ class OrgName(BaseArticleEntity, db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer(), db.ForeignKey('article.id'))
-    name = db.Column(db.String(100))
-    type = db.Column(db.String(100))
+    n = db.Column(db.String(100), index=True)
+    type = db.Column(db.String(100), index=True)
     attrib = {'n': True,
               'type': True}
 
@@ -224,7 +236,7 @@ class RefString(BaseArticleEntity, db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer(), db.ForeignKey('article.id'))
-    reg = db.Column(db.String(200))
-    type = db.Column(db.String(100))
+    reg = db.Column(db.String(200), index=True)
+    type = db.Column(db.String(100), index=True)
     attrib = {'reg': True,
               'type': True}

@@ -1,0 +1,57 @@
+<nav>
+    <div class="row root-toggle">
+        {{#link-to 'browse' alternateRoot}}browse by {{alternateRoot}}{{/link-to}}
+    </div>
+    <div class="row">
+        {{#each selectors}}
+            <div class="col-md-6">
+                {{paged-select2 type=type
+                                value=value
+                                options=options
+                                nextText=next
+                                prevText=prev
+                                style="width: 100%;"
+                                select="changeFocus"}}
+            </div>
+        {{/each}}
+    </div>
+</nav>
+{{#unless isLoading}}
+    <div {{bindAttr class=":row :browse-content showDetails"}}>
+        <section>
+            {{outlet}}
+        </section>
+        <aside>
+            <div class="glyphicon">
+                {{#if showDetails}}
+                    <label for=""> highlight </label>
+                {{/if}}
+                <span {{bindAttr class="showDetailsIconClass"}} {{action toggleDetails}}></span>
+            </div>
+            {{#if showDetails}}
+                <ul class="subjects nav nav-stacked nav-pills">
+                    {{#each subjects}}
+                        <li {{bindAttr class="active this.text"}}>
+                            <a href="#" {{action changeSubject this}}>{{text}}</a>
+                        </li>
+                    {{/each}}
+                </ul>
+                {{token-collector value=tokenCollectorValue
+                                  placeholder=tokenCollectorPlaceholder
+                                  options=tokenCollectorOptions
+                                  changed="updateTokenCollector"
+                                  onQuery="onEntityQuery"}}
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group pull-right">
+                        {{#link-to 'search' disabledBinding=noTokens
+                                            classNames="btn"}}
+                            search
+                        {{/link-to}}
+                    </div>
+                </div>
+            {{/if}}
+        </aside>
+    </div>
+{{else}}
+    {{!-- {{loading-spinner options=loadingSpinnerOptions isLoading=isLoading}} --}}
+{{/unless}}

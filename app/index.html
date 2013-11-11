@@ -10,14 +10,10 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-        <!-- build:css(.tmp) styles/main.css -->
         <link href='http://fonts.googleapis.com/css?family=Fjord+One' rel='stylesheet' type='text/css'>
-        <link rel="stylesheet" href="styles/main.css">
-        <link rel="stylesheet" href="bower_components/select2/select2.css">
-        <!-- endbuild -->
-        <!-- build:js scripts/vendor/modernizr.js -->
-        <script src="bower_components/modernizr/modernizr.js"></script>
-        <!-- endbuild -->
+        <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="vendor/select2/select2.css">
+        <script src="vendor/modernizr/modernizr.js"></script>
     </head>
     <body>
         <!--[if lt IE 10]>
@@ -35,13 +31,7 @@
             </div>
             <footer><a href="#">top</a></footer>
         </script>
-
-
-        <!-- build:js scripts/vendor.js -->
-        <!-- bower:js -->
-        <script src="bower_components/jquery/jquery.js"></script>
-        <!-- endbower -->
-        <!-- endbuild -->
+        <script src="vendor/jquery/jquery.js"></script>
 
         <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
         <script>
@@ -51,15 +41,8 @@
             e.src='//www.google-analytics.com/analytics.js';
             r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
             ga('create','UA-XXXXX-X');ga('send','pageview');
-        </script>
+         </script>
 
-        <!-- build:js scripts/main.js -->
-        <script data-main="scripts/main" src="bower_components/requirejs/require.js"></script>
-        <!-- endbuild -->
-        <!-- livereload script -->
-        <script>document.write('<script src="http://'
-         + (location.host || 'localhost').split(':')[0]
-         + ':35729/livereload.js?snipver=1" type="text/javascript"><\/script>')
-        </script>
+        <script data-main="js/main" src="vendor/requirejs/require.js"></script>
 </body>
 </html>

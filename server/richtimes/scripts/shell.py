@@ -7,8 +7,7 @@ from flask.ext.script import Command
 from richtimes.news import models
 import json
 from glob import glob
-from os.path import join, basename
-
+from os.path import join
 
 def get_etree(fname):
     """
@@ -51,7 +50,6 @@ def build_repo(dir):
             fout.write(etree.tostring(i.get_etree(), pretty_print=True))
 
 
-
 def build_index():
     """
     Constructs a JSON index.
@@ -92,10 +90,12 @@ def build_index():
         fout.write(jsonify(by_section))
         print 'wrote ' + sections_path
 
+
 class Rebuild(Command):
 
     def run(self):
         drop_and_rebuild_tables()
+
 
 class Index(Command):
 

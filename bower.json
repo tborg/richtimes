@@ -1,7 +1,7 @@
 {
   "name": "richtimes",
   "version": "0.0.0",
-  "directory": "app/bower_components",
+  "directory": "bower_components",
   "dependencies": {
     "richtimes-xml": "https://github.com/tborg/richtimes-xml.git",
     "sass-bootstrap": "~3.0.0",

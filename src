@@ -1,0 +1,605 @@
+(function() {
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  define(function(require) {
+    var App, Ember, ROOTS, hbs, index, name, next, read, routeIsTarget, sortIssues, templates, _, _i, _len, _ref;
+    Ember = require('ember');
+    require('select2');
+    require('bootstrapCollapse');
+    require('d3');
+    _ = require('lodash');
+    ROOTS = ['section', 'issue'];
+    templates = [
+      {
+        name: 'index',
+        hbs: require('text!./templates/index.hbs')
+      }, {
+        name: 'content',
+        hbs: require('text!./templates/content.hbs')
+      }, {
+        name: 'content/articles',
+        hbs: require('text!./templates/articles.hbs')
+      }, {
+        name: 'components/paged-select2',
+        hbs: require('text!./templates/components/pagedSelect2.hbs')
+      }
+    ];
+    for (_i = 0, _len = templates.length; _i < _len; _i++) {
+      _ref = templates[_i], name = _ref.name, hbs = _ref.hbs;
+      Ember.TEMPLATES[name] = Ember.Handlebars.compile(hbs);
+    }
+    routeIsTarget = function(transition, route) {
+      return transition.targetName.replace('.index', '') === route.get('routeName');
+    };
+    next = function(options, selection, offset) {
+      var fn;
+      fn = function() {
+        var i, opts;
+        opts = this.get(options);
+        i = opts.indexOf(this.get(selection));
+        return opts[i + offset];
+      };
+      return fn.property(options, selection);
+    };
+    sortIssues = function(a, b) {
+      var d, m, y, _d, _m, _ref1, _ref2, _y;
+      _ref1 = a.split('-').map(function(d) {
+        return parseInt(d, 10);
+      }), y = _ref1[0], m = _ref1[1], d = _ref1[2];
+      _ref2 = b.split('-').map(function(d) {
+        return parseInt(d, 10);
+      }), _y = _ref2[0], _m = _ref2[1], _d = _ref2[2];
+      return d3.ascending(y, _y) || d3.ascending(m, _m) || d3.ascending(d, _d);
+    };
+    read = function(path, paramsGetter) {
+      return function(params, opts) {
+        var _this = this;
+        if (opts == null) {
+          opts = {};
+        }
+        if (this._cancelRead) {
+          this._cancelRead();
+        }
+        return read = new Ember.RSVP.Promise(function(resolve, reject) {
+          var endpoint;
+          _this.set('isLoading', true);
+          _this._cancelRead = reject;
+          endpoint = path.fmt.apply(path, paramsGetter.apply(_this, [params, opts]));
+          return $.getJSON(endpoint, opts).then(function(content) {
+            var _ref1;
+            _this.cancelRead = null;
+            if (!((_ref1 = content.status_code || 200) === 200 || _ref1 === 201)) {
+              reject(content);
+            }
+            resolve(content.data);
+            return _this.set('isLoading', false);
+          }, function(error) {
+            _this.set('isLoading', false);
+            _this.cancelRead = null;
+            return reject(error);
+          });
+        });
+      };
+    };
+    index = function(rootName, childName, data) {
+      var focus, options, sorts;
+      sorts = {
+        section: d3.ascending,
+        issue: sortIssues
+      };
+      options = Ember.keys(data).sort(sorts[rootName]);
+      focus = function(key) {
+        return {
+          name: rootName,
+          rootOptions: options,
+          childOptions: data[key].sort(sorts[childName]),
+          value: key,
+          next: options[options.indexOf(key) + 1],
+          prev: options[options.indexOf(key) - 1],
+          page: function(key) {
+            return focus(key);
+          }
+        };
+      };
+      return focus(options[0]);
+    };
+    App = Ember.Application.create({
+      LOG_TRANSITIONS: true
+    });
+    App.Router.map(function() {
+      this.resource('content', {
+        path: '/:root/:section/:issue'
+      }, function() {
+        this.route('articles');
+        this.route('people');
+        this.route('places');
+        this.route('organizations');
+        return this.route('keywords');
+      });
+      return this.route('missing', {
+        path: '/*path'
+      });
+    });
+    App.ApplicationRoute = Ember.Route.extend({
+      actions: {
+        error: function(error, transition) {
+          throw error;
+        }
+      }
+    });
+    App.IndexRoute = Ember.Route.extend({
+      afterModel: function(m, transition) {
+        if (routeIsTarget(transition, this)) {
+          return this.transitionTo('content');
+        }
+      }
+    });
+    App.ContentRoute = Ember.Route.extend({
+      model: function(params, transition) {
+        var child, controller, key, root, rootIndex, _ref1;
+        controller = this.controllerFor('content');
+        if (!(_ref1 = params.root, __indexOf.call(ROOTS, _ref1) >= 0)) {
+          params.root = ROOTS[0];
+        }
+        controller.set('root', root = params.root);
+        rootIndex = controller.get('%@Index'.fmt(root));
+        if (!(key = params[root])) {
+          params[root] = (key = rootIndex.rootOptions[0]);
+        }
+        controller.set('index', rootIndex.page(key));
+        child = controller.get('alternateRoot');
+        if (!(key = params[child])) {
+          params[child] = controller.get('index.childOptions.0');
+        }
+        controller.setProperties(params);
+        return params;
+      },
+      afterModel: function(model, transition) {
+        var controller, subjects, target;
+        if (routeIsTarget(transition, this)) {
+          if (model.section && model.issue) {
+            return this.transitionTo('content.articles', model);
+          }
+        } else {
+          controller = this.controllerFor('content');
+          subjects = controller.get('subjects');
+          target = subjects.filter(function(d) {
+            return transition.targetName.match(d.text);
+          })[0].text;
+          return controller.set('subject', target);
+        }
+      }
+    });
+    App.ContentArticlesRoute = Ember.Route.extend({
+      model: function(params) {
+        return this.controllerFor('contentArticles').read();
+      }
+    });
+    App.ContentController = Ember.ObjectController.extend({
+      subject: 'articles',
+      index: null,
+      LoadingView: require('lib/loadingSpinnerView').extend({
+        options: {
+          top: '100px'
+        }
+      }),
+      subjects: (function() {
+        var subject;
+        subject = this.get('subject');
+        return ['articles', 'people', 'places', 'organizations', 'keywords'].map(function(d) {
+          return {
+            text: d,
+            active: d === subject
+          };
+        });
+      }).property('subject'),
+      init: function() {
+        this._super();
+        this.set('content', {});
+        this.set('sectionIndex', index('section', 'issue', JSON.parse(require('text!../json/sections.json'))));
+        return this.set('issueIndex', index('issue', 'section', JSON.parse(require('text!../json/issues.json'))));
+      },
+      selectors: (function() {
+        var child, childI, childVal, root;
+        index = this.get('index');
+        if (!index) {
+          return [];
+        }
+        return [
+          {
+            type: (root = this.get('root')),
+            options: index.rootOptions,
+            value: this.get(root),
+            next: index.next,
+            prev: index.prev
+          }, {
+            type: (child = this.get('alternateRoot')),
+            options: index.childOptions,
+            value: (childVal = this.get(child)),
+            next: index.childOptions[(childI = index.childOptions.indexOf(childVal)) + 1],
+            prev: index.childOptions[childI - 1]
+          }
+        ];
+      }).property('content', 'issue', 'section', 'index'),
+      alternateRoot: (function() {
+        var root;
+        root = this.get('root');
+        return ROOTS.filter(function(d) {
+          return d !== root;
+        })[0];
+      }).property('root'),
+      actions: {
+        changeFocus: function(_arg) {
+          var child, type, value, _ref1;
+          type = _arg.type, value = _arg.value;
+          this.set(type, value);
+          if (type === this.get('root')) {
+            this.set('index', (index = this.get('%@Index'.fmt(type)).page(value)));
+            if (!(_ref1 = (child = this.get('alternateRoot')), __indexOf.call(index.childOptions, _ref1) >= 0)) {
+              this.set(child, index.childOptions[0]);
+            }
+          }
+          return this.transitionToRoute('content.%@'.fmt(this.get('subject')), this.get('content'));
+        },
+        changeSubject: function(_arg) {
+          var text;
+          text = _arg.text;
+          this.set('subject', text);
+          return this.transitionToRoute('content.%@'.fmt(text), this.get('content'));
+        }
+      }
+    });
+    App.ContentArticlesController = Ember.ArrayController.extend({
+      needs: ['content'],
+      isLoadingBinding: 'controllers.content.isLoading',
+      read: read('articles/%@/%@', function(params, opts) {
+        var issue, section, _ref1;
+        _ref1 = this.get('controllers.content').getProperties(['issue', 'section']), issue = _ref1.issue, section = _ref1.section;
+        return [issue, section];
+      })
+    });
+    App.ApplicationView = Ember.View.extend({
+      didInsertElement: function() {
+        this._super();
+        return this.$('footer a').click(function() {
+          $('body').animate({
+            scrollTop: '0'
+          });
+          return false;
+        });
+      }
+    });
+    return App.PagedSelect2Component = Ember.Component.extend({
+      actions: {
+        next: function() {
+          return this.sendAction('select', {
+            type: this.get('type'),
+            value: this.get('nextText')
+          });
+        },
+        prev: function() {
+          return this.sendAction('select', {
+            type: this.get('type'),
+            value: this.get('prevText')
+          });
+        }
+      },
+      query: function(_arg) {
+        var callback, options, page, results, term;
+        term = _arg.term, callback = _arg.callback, page = _arg.page;
+        options = this.get('options').filter(function(d) {
+          return d.toLowerCase().match(term);
+        });
+        results = {
+          results: options.slice((page - 1) * 10, page * 10).map(function(d) {
+            return {
+              text: d,
+              id: d
+            };
+          }),
+          more: options.length > page * 10
+        };
+        return callback(results);
+      },
+      update: function(e) {
+        return this.sendAction('select', {
+          type: this.get('type'),
+          value: e.val
+        });
+      },
+      initSelection: function(el, callback) {
+        var id;
+        id = this.get('value');
+        return callback({
+          id: id,
+          text: id
+        });
+      },
+      valueChanged: (function() {
+        var selectorVal, value;
+        if (!this.select2) {
+          return;
+        }
+        value = this.get('value');
+        selectorVal = this.select2.select2('val');
+        if (selectorVal !== value) {
+          return this.select2.select2('val', value);
+        }
+      }).observes('value'),
+      didInsertElement: function() {
+        var containerCssClass, initSelection, query, update;
+        this._super();
+        query = _.bind(this.query, this);
+        initSelection = _.bind(this.initSelection, this);
+        update = _.bind(this.update, this);
+        containerCssClass = '%@-select-container'.fmt(this.get('type'));
+        return this.select2 = this.$('input').select2({
+          query: query,
+          initSelection: initSelection,
+          containerCssClass: containerCssClass
+        }).on('change', update);
+      },
+      willDestroyElement: function() {
+        this.select2.off('change').select2('destroy');
+        return this._super();
+      }
+    });
+  });
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var App, Ember;
+    App = require('App');
+    return Ember = require('ember');
+  });
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var Ember, Spinner;
+    Spinner = require('spin');
+    Ember = require('ember');
+    return Ember.View.extend({
+      classNames: ['loading-spinner'],
+      classNameBindings: ['isLoading'],
+      _options: {
+        lines: 7,
+        length: 20,
+        width: 22,
+        radius: 30,
+        corners: 1,
+        rotate: 0,
+        color: '#000',
+        speed: 1,
+        trail: 60,
+        shadow: false,
+        hwaccel: false,
+        className: 'spinner',
+        zIndex: 2e9,
+        top: 'auto',
+        left: 'auto'
+      },
+      isLoadingBinding: 'controller.isLoading',
+      didInsertElement: function() {
+        var options;
+        this._super();
+        this.node = this.$()[0];
+        options = Ember.Object.create(this.get('_options'), this.get('options'));
+        this.spinner = new Spinner(options);
+        return this.spinner.stop();
+      },
+      isLoadingChanged: (function() {
+        var isLoading;
+        isLoading = this.get('isLoading');
+        if (isLoading) {
+          return this.spinner.spin(this.node);
+        } else {
+          return this.spinner.stop();
+        }
+      }).observes('isLoading')
+    });
+  });
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var Ember, template;
+    Ember = require('Ember');
+    template = require('text!./pagedSelect2View.hbs');
+    return Ember.View.extend({
+      template: Ember.Handlebars.compile(template)
+    });
+  });
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var Ember, _;
+    require('select2');
+    _ = require('lodash');
+    Ember = require('ember');
+    return Ember.View.extend({
+      tagName: 'input',
+      attributeBindings: ['type'],
+      type: 'hidden',
+      value: null,
+      options: null,
+      attributeBindings: ['style'],
+      style: 'width: 100%;',
+      query: function(_arg) {
+        var callback, term;
+        term = _arg.term, callback = _arg.callback;
+        return callback({
+          results: this.get('options').filter(function(d) {
+            return d.toLowerCase().match(term);
+          }).map(function(d) {
+            return {
+              text: d,
+              id: d
+            };
+          })
+        });
+      },
+      update: function(e) {
+        return this.set('value', e.val);
+      },
+      initSelection: function(el, callback) {
+        var id;
+        id = this.get('value');
+        return callback({
+          id: id,
+          text: id
+        });
+      },
+      valueChanged: (function() {
+        var selectorVal, value;
+        if (!this.select2) {
+          return;
+        }
+        value = this.get('value');
+        selectorVal = this.select2.select2('val');
+        if (selectorVal !== value) {
+          return this.select2.select2('val', value);
+        }
+      }).observes('value'),
+      didInsertElement: function() {
+        var initSelection, query, update;
+        this._super();
+        query = _.bind(this.query, this);
+        initSelection = _.bind(this.initSelection, this);
+        update = _.bind(this.update, this);
+        return this.select2 = this.$().select2({
+          query: query,
+          initSelection: initSelection
+        }).on('change', update);
+      },
+      willDestroyElement: function() {
+        this.select2.off('change').select2('destroy');
+        return this._super();
+      }
+    });
+  });
+
+}).call(this);
+
+(function() {
+  require.config({
+    paths: {
+      app: './app',
+      bootstrapAffix: 'vendor/sass-bootstrap/js/affix',
+      bootstrapAlert: 'vendor/sass-bootstrap/js/alert',
+      bootstrapButton: 'vendor/sass-bootstrap/js/button',
+      bootstrapCarousel: 'vendor/sass-bootstrap/js/carousel',
+      bootstrapCollapse: 'vendor/sass-bootstrap/js/collapse',
+      bootstrapDropdown: 'vendor/sass-bootstrap/js/dropdown',
+      bootstrapPopover: 'vendor/sass-bootstrap/js/popover',
+      bootstrapScrollspy: 'vendor/sass-bootstrap/js/scrollspy',
+      bootstrapTab: 'vendor/sass-bootstrap/js/tab',
+      bootstrapTooltip: 'vendor/sass-bootstrap/js/tooltip',
+      bootstrapTransition: 'vendor/sass-bootstrap/js/transition',
+      d3: 'vendor/d3/d3',
+      ember: 'vendor/ember/ember',
+      emberData: 'vendor/ember-data/index',
+      jquery: 'vendor/jquery/jquery',
+      handlebars: 'vendor/handlebars/handlebars',
+      lodash: 'vendor/lodash/dist/lodash',
+      select2: 'vendor/select2/select2',
+      spin: 'vendor/spin.js/dist/spin',
+      text: 'vendor/requirejs-text/text'
+    },
+    shim: {
+      bootstrapAffix: {
+        deps: ['jquery']
+      },
+      bootstrapAlert: {
+        deps: ['jquery']
+      },
+      bootstrapButton: {
+        deps: ['jquery']
+      },
+      bootstrapCarousel: {
+        deps: ['jquery']
+      },
+      bootstrapCollapse: {
+        deps: ['jquery']
+      },
+      bootstrapDropdown: {
+        deps: ['jquery']
+      },
+      bootstrapPopover: {
+        deps: ['jquery']
+      },
+      bootstrapScrollspy: {
+        deps: ['jquery']
+      },
+      bootstrapTab: {
+        deps: ['jquery']
+      },
+      bootstrapTooltip: {
+        deps: ['jquery']
+      },
+      bootstrapTransition: {
+        deps: ['jquery']
+      },
+      d3: {
+        exports: 'd3'
+      },
+      ember: {
+        deps: ['jquery', 'handlebars'],
+        exports: 'Ember'
+      },
+      emberData: {
+        deps: ['ember'],
+        exports: 'DS'
+      },
+      lodash: {
+        exports: '_'
+      },
+      select2: {
+        deps: ['jquery']
+      }
+    }
+  });
+
+  require(['./app'], function() {});
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var App, Ember;
+    App = require('app');
+    return Ember = require('ember');
+  });
+
+}).call(this);
+
+(function() {
+  define(function(require) {
+    var App, Ember, Select2View;
+    App = require('app');
+    Ember = require('ember');
+    Select2View = require('lib/select2View');
+    App.ContentTypesView = Select2View.extend({
+      valueChanged: (function() {
+        return this.send('changeType', this.controller.findProperty('id', this.get('value')));
+      }).observes('value')
+    });
+    App.ContentSectionsView = Select2View.extend({
+      valueChanged: (function() {
+        return this.send('changeSection', this.controller.findProperty('id', this.get('value')));
+      }).observes('value')
+    });
+    return App.ContentDatesView = Select2View.extend({
+      valueChanged: (function() {
+        return this.send('changeDate', this.controller.findProperty('id', this.get('value')));
+      }).observes('value')
+    });
+  });
+
+}).call(this);

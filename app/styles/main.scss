@@ -1,6 +1,6 @@
-$icon-font-path: "/bower_components/sass-bootstrap/fonts/";
+$icon-font-path: "../vendor/sass-bootstrap/fonts/";
 
-@import 'sass-bootstrap/lib/bootstrap';
+@import 'bootstrap';
 
 .browsehappy {
     margin: 0.2em 0;
@@ -161,20 +161,138 @@ ul.pager {
     }
 }
 
-nav .nav-pills {
-    margin-top: 1em;
-    li {
-        padding: 1em;
-        a {
-            padding: 0.4em;
-        }
-    }
-    border-bottom: 1px solid black;
-}
 
 .root-toggle a {
     float: right;
     margin-right: 2em;
+}
+
+$peopleColor: yellow;
+$placesColor: lightblue;
+$orgsColor: lightpink;
+$rsColor: lightgreen;
+
+.browse-content {
+    margin-top: 30px;
+    .glyphicon {
+        width: 100%;
+        margin-top: 10px;
+        label {
+            line-height:2.2em;
+        }
+        span {
+            font-size: 30px;
+            @extend .pull-right;
+        }
+    }
+    section {
+        border-right: 1px solid whitesmoke;
+        @extend .col-sm-11;
+    }
+    aside {
+        .nav-stacked.nav-pills {
+            margin-top: 1em;
+            li {
+                padding: 0.1em;
+                &.active.people a {
+                    color: black;
+                    background-color: $peopleColor;
+                }
+                &.active.places a {
+                    color: black;
+                    background-color: $placesColor;
+                }
+                &.active.organizations a {
+                    color: black;
+                    background-color: $orgsColor;
+                }
+                &.active.keywords a {
+                    color: black;
+                    background-color: $rsColor;
+                }
+                a {
+                    padding: 0.1em 0 0.1em 1em;
+                }
+            }
+            border-bottom: 1px solid black;
+        }
+        @extend .col-sm-1
+    }
+}
+
+.browse-content.show-details {
+    section {
+        @extend .col-sm-9
+    }
+    aside {
+        @extend .col-sm-3
+    }
+}
+
+.rounded-corners {
+    border-radius: 5px;
+}
+
+.tei.persName[data-tei-n][data-tei-reg]:hover {
+    cursor: pointer!important;
+    background-color: transparentize($peopleColor, 0.5);
+}
+.highlight.people {
+    .tei.persName[data-tei-n][data-tei-reg] {
+        background-color: $peopleColor;
+        @extend .rounded-corners;
+    }
+}
+
+
+.tei.placeName[data-tei-key][data-tei-reg]:hover {
+    cursor: pointer!important;
+    background-color: transparentize($placesColor, 0.5);
+}
+.highlight.places {
+    .tei.placeName[data-tei-key][data-tei-reg] {
+        background-color: $placesColor;
+        @extend .rounded-corners;
+    }
+}
+
+
+.tei.orgName[data-tei-n][data-tei-type]:hover {
+    cursor: pointer!important;
+    background-color: transparentize($orgsColor, 0.5);
+}
+.highlight.organizations {
+    .tei.orgName[data-tei-n][data-tei-type] {
+        background-color: $orgsColor;
+        @extend .rounded-corners;
+    }
+}
+
+
+.tei.rs[data-tei-reg][data-tei-type]:hover {
+    cursor: pointer!important;
+    background-color: transparentize($rsColor, 0.5);
+}
+.highlight.keywords {
+    .tei.rs[data-tei-reg][data-tei-type] {
+        background-color: $rsColor;
+        @extend .rounded-corners;
+    }
+}
+
+
+.search-articles article {
+    max-height: 10em;
+    overflow: hidden;
+}
+
+.loading-spinner {
+    min-height: 300px;
+    display: none;
+}
+
+.loading-spinner.is-loading {
+    display: block;
 }
 
 footer {

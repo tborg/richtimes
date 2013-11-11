@@ -1,0 +1,36 @@
+{{#unless isLoading}}
+    <div class="row">
+        {{token-collector value=content
+                          placeholder='search'
+                          minimumInputLength=3
+                          ajax=searchSuggestionsQuery
+                          changed='changeContent'}}
+    </div>
+    <div class="row articles search-articles">
+        {{#each date in articles}}
+            {{#each subsection in date.values}}
+                {{#each article in subsection.values}}
+                    <h4>
+                        <a href="#" {{action goToSection 'issue' date.key subsection.key}}>
+                            {{date.key}}
+                        </a>
+                        &rarr;
+                        <a href="#" {{action goToSection 'section' date.key subsection.key}}>
+                            {{subsection.key}}
+                        </a>
+                    </h4>
+                    <hr>
+                    <div class="row">
+                        <article>
+                            {{{article.content}}}
+                        </article>
+                    </div>
+                    <hr>
+                {{/each}}
+            {{/each}}
+        {{/each}}
+    </div>
+{{else}}
+    {{loading-spinner options=loadingSpinnerOptions 
+                      isLoading=isLoading}}
+{{/unless}}
