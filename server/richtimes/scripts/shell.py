@@ -1,13 +1,13 @@
 from richtimes import app, db
 from lxml import etree
 from os import path
-from build_pub_data import build_pub_data
 from richtimes.news.models import PubData
 from flask.ext.script import Command
 from richtimes.news import models
 import json
 from glob import glob
 from os.path import join
+
 
 def get_etree(fname):
     """
@@ -46,7 +46,8 @@ def drop_and_rebuild_tables():
 
 def build_repo(dir):
     for i in PubData.query.all():
-        with open(join(app.root_path, dir, '{}-{}.xml'.format(i.id, i.date)), 'w') as fout:
+        with open(join(app.root_path, dir,
+                  '{}-{}.xml'.format(i.id, i.date)), 'w') as fout:
             fout.write(etree.tostring(i.get_etree(), pretty_print=True))
 
 
@@ -112,7 +113,6 @@ def make_shell_context():
     return {'app': app,
             'db': db,
             'get_etree': get_etree,
-            'build_pub_data': build_pub_data,
             'drop_and_rebuild_tables': drop_and_rebuild_tables,
             'PubData': PubData,
             'build_index': build_index,
