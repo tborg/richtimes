@@ -22,34 +22,36 @@
             {{outlet}}
         </section>
         <aside>
-            <div class="glyphicon">
-                {{#if showDetails}}
-                    <label for=""> highlight </label>
-                {{/if}}
-                <span {{bindAttr class="showDetailsIconClass"}} {{action toggleDetails}}></span>
-            </div>
-            {{#if showDetails}}
-                <ul class="subjects nav nav-stacked nav-pills">
-                    {{#each subjects}}
-                        <li {{bindAttr class="active this.text"}}>
-                            <a href="#" {{action changeSubject this}}>{{text}}</a>
-                        </li>
-                    {{/each}}
-                </ul>
-                {{token-collector value=tokenCollectorValue
-                                  placeholder=tokenCollectorPlaceholder
-                                  options=tokenCollectorOptions
-                                  changed="updateTokenCollector"
-                                  onQuery="onEntityQuery"}}
-                <div class="btn-toolbar" role="toolbar">
-                    <div class="btn-group pull-right">
-                        {{#link-to 'search' disabledBinding=noTokens
-                                            classNames="btn"}}
-                            search
-                        {{/link-to}}
-                    </div>
+            <div class="aside-content-container">
+                <div class="glyphicon">
+                    {{#if showDetails}}
+                        <label for=""> highlight </label>
+                    {{/if}}
+                    <span {{bindAttr class="showDetailsIconClass"}} {{action toggleDetails}}></span>
                 </div>
-            {{/if}}
+                {{#if showDetails}}
+                    <ul class="subjects nav nav-stacked nav-pills">
+                        {{#each subjects}}
+                            <li {{bindAttr class="active this.text"}}>
+                                <a href="#" {{action changeSubject this}}>{{text}}</a>
+                            </li>
+                        {{/each}}
+                    </ul>
+                    {{token-collector value=tokenCollectorValue
+                                      placeholder=tokenCollectorPlaceholder
+                                      options=tokenCollectorOptions
+                                      changed="updateTokenCollector"
+                                      onQuery="onEntityQuery"}}
+                    <div class="btn-toolbar" role="toolbar">
+                        <div class="btn-group pull-right">
+                            {{#link-to 'search' disabledBinding=noTokens
+                                                classNames="btn"}}
+                                search
+                            {{/link-to}}
+                        </div>
+                    </div>
+                {{/if}}
+            </div>
         </aside>
     </div>
 {{else}}

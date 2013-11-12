@@ -17,8 +17,6 @@ sublime-project.*
 RESTServer.log
 /server/.settings/org.eclipse.core.resources.prefs
 .idea
-/server/config_tborglocal.py
-/server/config.py
 *.sql
 bower_components
 notes.md
