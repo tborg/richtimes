@@ -77,7 +77,7 @@ module.exports = (grunt) ->
     server:
       dest: '/'
       cwd: server '/'
-      src: '**/*.py'
+      src: ['**/*.py', 'supervisord.conf']
     misc:
       dest: htdocs '/'
       cwd: dev '/'
