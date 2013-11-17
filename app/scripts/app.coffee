@@ -313,11 +313,11 @@ define (require) ->
     isLoadingBinding: 'controllers.browse.isLoading'
     tokenCollectorValueBinding: 'controllers.browse.tokenCollectorValue'
     showDetailsBinding: 'controllers.browse.showDetails'
-    read: read '/articles/%@/%@', bySectionGetter
+    read: read '/v1/articles/%@/%@', bySectionGetter
 
   # # SEARCH
   App.SearchController = Ember.ObjectController.extend
-    read: read '/related-articles', () -> []
+    read: read '/v1/related-articles', () -> []
     loadingSpinnerOptions:
       top: '100px'
 
@@ -352,7 +352,7 @@ define (require) ->
     actions:
       changeContent: (d) -> @set 'content', d.value
 
-    readSearchSuggestions: read '/suggestions', () -> []
+    readSearchSuggestions: read '/v1/suggestions', () -> []
 
   # VIEWS
 

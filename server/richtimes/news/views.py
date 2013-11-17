@@ -18,13 +18,13 @@ def with_articles(fn):
     return handler
 
 
-@news.route('/articles/<date>/<subsection_type>', methods=['GET'])
+@news.route('/v1/articles/<date>/<subsection_type>', methods=['GET'])
 @with_articles
 def articles(date, subsection_type, articles):
     return jsonify({'data': [a.to_json() for a in articles.all()]})
 
 
-@news.route('/related-articles', methods=['GET'])
+@news.route('/v1/related-articles', methods=['GET'])
 def related_articles():
     """
     Fetch a set of articles related to the terms in your query.
@@ -72,7 +72,7 @@ def related_articles():
     return jsonify({'data': [a.to_json() for a in articles]})
 
 
-@news.route('/suggestions', methods=['GET'])
+@news.route('/v1/suggestions', methods=['GET'])
 def suggestions():
     term = request.values.get('term')
     limit = 5
