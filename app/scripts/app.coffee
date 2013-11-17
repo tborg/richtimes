@@ -408,7 +408,6 @@ define (require) ->
           teiElement = parent.getAttribute('class').split(' ')[1]
           handlers[teiElement] parent
       if setval
-        console.log setval
         controller.set 'controllers.browse.tokenCollectorValue', setval
         if not controller.get('showDetails')
           controller.toggleProperty 'showDetails'
