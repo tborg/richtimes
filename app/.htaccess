@@ -541,17 +541,3 @@ FileETag None
 # <IfModule mod_headers.c>
 #    Header set Connection Keep-Alive
 # </IfModule>
-
-
-# FLASK PROXY
-
-ProxyRequests Off
-ProxyPreserveHost On
-
-<Proxy *>
-    Order deny,allow
-    Allow from all
-</Proxy>
-
-ProxyPass /v1/ http://localhost:5001/v1/
-ProxyPassReverse /v1/ http://localhost:5001/v1/
