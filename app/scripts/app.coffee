@@ -340,7 +340,7 @@ define (require) ->
     ).observes('content')
 
     searchSuggestionsQuery:
-      url: '/suggestions'
+      url: '/v1/suggestions'
       dataType: 'json'
       quitMillis: 500
       cache: true
