@@ -17,6 +17,7 @@ define (require) ->
     {name: 'browse', hbs: require 'text!./templates/browse.hbs'}
     {name: 'browse/section', hbs: require 'text!./templates/section.hbs'}
     {name: 'search', hbs: require 'text!./templates/search.hbs'}
+    {name: 'search/page', hbs: require 'text!./templates/searchPage.hbs'}
 
     {name: 'components/token-collector', hbs: require 'text!./templates/components/tokenCollector.hbs'}
     {name: 'components/paged-select2', hbs: require 'text!./templates/components/pagedSelect2.hbs'}
@@ -43,7 +44,9 @@ define (require) ->
     [_y, _m, _d] = b.split('-').map((d) -> parseInt(d, 10))
     d3.ascending(y, _y) or d3.ascending(m, _m) or d3.ascending(d, _d)
 
-  read = (path, paramsGetter) -> (opts={}) ->
+  emptyParamsGetter = () -> []
+
+  read = (path, paramsGetter=emptyParamsGetter) -> (opts={}) ->
     if @_cancelRead then @_cancelRead()
     read = new Ember.RSVP.Promise (resolve, reject) =>
       @set 'isLoading', true
@@ -109,8 +112,8 @@ define (require) ->
   App.Router.map () ->
     @resource 'browse', {path: '/:root/:section/:issue'}, ->
       @route 'section'
-    @resource 'search'
-    @route 'missing', {path: '/*path'}
+    @resource 'search', ->
+      @route 'page', {path: '/:page'}
 
   # ROUTES
 
@@ -179,7 +182,7 @@ define (require) ->
 
   # # SEARCH
   App.SearchRoute = Ember.Route.extend
-    model: () ->
+    model: (params) ->
       try
         @controllerFor('browse')
           .get('tokenCollectorValue')
@@ -193,7 +196,7 @@ define (require) ->
           model = @controllerFor('browse')
             .get('tokenCollectorValue')
         catch e
-          model = {}
+          model = []
       @_super(controller, model)
 
     actions:
@@ -204,6 +207,31 @@ define (require) ->
         alternateRoot = browseController.get 'alternateRoot'
         browseController.send 'changeFocus', type: root, value: model[root]
         browseController.send 'changeFocus', type: alternateRoot, value: model[alternateRoot]
+
+
+  # # SEARCH -> PAGE
+  App.SearchPageRoute = Ember.Route.extend
+    model: (params) ->
+      if not params?.page then page: 1 else params
+
+    setupController: (controller, model) ->
+      @_super.apply @, arguments
+      controller.read(controller.getQueryParams())
+      .then((articles) ->
+        controller.set 'articles', d3.nest()
+          .key((d) -> d.date)
+          .key((d) -> d.subsection)
+          .entries(articles)
+      )
+
+    actions:
+      changePage: (increment) ->
+        searchPageController = @controllerFor 'searchPage'
+        {limit, page, articles} = searchPageController
+          .getProperties(['limit', 'articles', 'page'])
+        if (page + increment) > 0 and not Ember.isEmpty articles
+          @transitionTo 'search.page', page: parseInt(page, 10) + parseInt(increment, 10)
+
   # CONTROLLERS
 
   # # BROWSE
@@ -306,7 +334,6 @@ define (require) ->
         @set 'tokenCollectorValue', d.value
 
 
-
   # # BROWSE - > SECTION
   App.BrowseSectionController = Ember.ArrayController.extend
     needs: ['browse']
@@ -317,28 +344,6 @@ define (require) ->
 
   # # SEARCH
   App.SearchController = Ember.ObjectController.extend
-    read: read '/v1/related-articles', () -> []
-    loadingSpinnerOptions:
-      top: '100px'
-
-    contentChanged: (() ->
-      searchTerms = @get('content').map(JSON.parse, JSON)
-      unless Ember.isEmpty searchTerms
-        params = d3.nest().key((d) -> d.type).entries(searchTerms)
-          .reduce(
-            (a, b) ->
-              a[b.key] = (a[b.type] or '') + b.values.getEach('text').join(';')
-              a
-            {}
-          )
-        @read(params).then((articles) =>
-          @set 'articles', d3.nest()
-            .key((d) -> d.date)
-            .key((d) -> d.subsection)
-            .entries(articles)
-        )
-    ).observes('content')
-
     searchSuggestionsQuery:
       url: '/v1/suggestions'
       dataType: 'json'
@@ -349,10 +354,38 @@ define (require) ->
         results: data.data
         more: data.more
 
+    contentChanged: (() ->
+      @transitionToRoute 'search.page', page: 1
+    ).observes('content')
+
     actions:
       changeContent: (d) -> @set 'content', d.value
 
-    readSearchSuggestions: read '/v1/suggestions', () -> []
+
+  # # SEARCH - > PAGE
+  App.SearchPageController = Ember.ObjectController.extend
+    loadingSpinnerOptions:
+      top: '100px'
+
+    needs: ['search']
+    limit: 10
+    searchTermsBinding: 'controllers.search.content'
+    isFirst: Ember.computed.equal 'page', 1
+    read: read '/v1/related-articles'
+
+    getQueryParams: () ->
+      searchTerms = @get('searchTerms').map(JSON.parse, JSON)
+      unless Ember.isEmpty searchTerms
+        {limit, page} = @getProperties ['limit', 'page']
+        params = d3.nest()
+          .key((d) -> d.type)
+          .entries(searchTerms)
+          .reduce(
+            (a, b) ->
+              a[b.key] = (a[b.type] or '') + b.values.getEach('text').join(';')
+              a
+            {offset: limit * (parseInt(page, 10) - 1)}
+          )
 
   # VIEWS
 

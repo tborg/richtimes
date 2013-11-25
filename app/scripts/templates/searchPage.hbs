@@ -1,0 +1,31 @@
+{{#unless isLoading}}
+    <div class="row articles search-articles">
+        {{#each date in articles}}
+            {{#each subsection in date.values}}
+                {{#each article in subsection.values}}
+                    <div class="row">
+                        <a href="#" {{action goToSection 'issue' date.key subsection.key}}>
+                            {{date.key}}
+                        </a>
+                        &rarr;
+                        <a href="#" {{action goToSection 'section' date.key subsection.key}}>
+                            {{subsection.key}}
+                        </a>
+                    </div>
+                    <div class="row">
+                        <article>
+                            {{{article.content}}}
+                        </article>
+                    </div>
+                {{/each}}
+            {{/each}}
+        {{/each}}
+    </div>
+     <ul class="pager">
+            <li {{bindAttr class="isFirst:disabled"}}><a href="" {{action changePage -1}}>&larr;</a></li>
+            <li {{bindAttr class="isLast:disabled"}}><a href="" {{action changePage 1}}>&rarr;</a></li>
+    </ul>
+{{else}}
+    {{loading-spinner options=loadingSpinnerOptions 
+                      isLoading=isLoading}}
+{{/unless}}

@@ -1,4 +1,11 @@
 $icon-font-path: "../vendor/sass-bootstrap/fonts/";
+$background-color: #eadfc5;
+$red: #b82f0e;
+$deep-red: #c83612;
+$matte-red: #cc3713;
+$font-family: Garamond, serif;
+$base-font-size: 1.5em;
+$border-black: #3A2525;
 
 @import 'bootstrap';
 
@@ -13,6 +20,8 @@ $icon-font-path: "../vendor/sass-bootstrap/fonts/";
 body {
     padding-top: 20px;
     padding-bottom: 20px;
+    font-family: $font-family;
+    background-color: $background-color;
 }
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
@@ -93,18 +102,18 @@ body {
 /*  ****  APP STYLES START HERE  ****  */
 
 .articles {
-    margin-left: 4em;
+    margin-left: 0;
 }
 
 ul.pager > li > a {
-    font-size: 0.9em;
     padding: 2px;
     border: none;
+    color: $red;
 }
 
 .tei.head {
-    font-family: 'Fjord One', serif;
-    font-size: 1.3em;
+    font-family: $font-family;
+    font-size: 1.8em;
     [data-tei-rend="smallcaps"] {
         font-weight: bold;
     }
@@ -116,7 +125,7 @@ ul.pager > li > a {
 
 p {
     [data-tei-rend="smallcaps"] {
-        font-size: 1.1em;
+        font-size: 1.3em;
     }
 }
 
@@ -127,44 +136,51 @@ p {
 ul.tei.list {
     list-style: none;
     .tei.head {
-        font-size: 1em;
+        font-size: 1.3em;
     }
 }
 
 .tei.div3 {
-    font-family: 'Fjord One', serif;
+    font-family: $font-family;
 }
 
 p.tei.p {
     padding-left: 2em;
-    font-size: 1.1em;
+    font-size: 1.3em;
     margin-bottom: 0.2em;
-    max-width: 80%;
+    max-width: 90%;
     text-align: justify;
     text-indent: 1em;
 }
 
 .tei.table {
-    max-width: 80%;
+    max-width: 90%;
 }
 
 ul.pager {
     margin: 0;
-    label: {
-        font-variant: small-caps;
+    li {
+        a {
+            background-color: $background-color;
+            max-width: 50%;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
     }
-    a {
-        max-width: 50%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
+    .disabled > a {
+        background-color: $background-color;
     }
 }
 
 
-.root-toggle a {
-    float: right;
-    margin-right: 2em;
+.root-toggle {
+    a {
+        float: right;
+        margin-right: 1em;
+        font-size: 1.3em;
+        color: $deep-red;
+    }
 }
 
 $peopleColor: yellow;
@@ -172,28 +188,55 @@ $placesColor: lightblue;
 $orgsColor: lightpink;
 $rsColor: lightgreen;
 
+a {
+    color: $red;
+    &:hover {
+        color: $red;
+        text-decoration: underline;
+    }
+}
+
+article {
+    border-top: 1px solid $red;
+    margin-right: 1em;
+    margin-bottom: 1em;
+}
+
+.search-row {
+    .search {
+        margin: 1em 5em 1em 5em;
+        padding-bottom: 1em;
+    }
+}
+
 .browse-content {
     margin-top: 30px;
-    .glyphicon {
-        width: 100%;
-        margin-top: 10px;
-        label {
-            line-height:2.2em;
-        }
-        span {
-            font-size: 30px;
-            @extend .pull-right;
-        }
-    }
+    background-color: $background-color;
     section {
-        border-right: 1px solid whitesmoke;
-        @extend .col-sm-11;
+        border-right: 1px solid $border-black;
+        @extend .col-sm-10;
     }
     aside {
+        padding-bottom: 1em;
+        .glyphicon {
+            margin: 1em;
+            label {
+                line-height:2em;
+                font-family: $font-family;
+                color: $deep-red;
+            }
+            span {
+                font-size: 30px;
+                @extend .pull-right;
+            }
+        }
         .nav-stacked.nav-pills {
             margin-top: 1em;
+            margin-bottom: 1em;
             li {
                 padding: 0.1em;
+                text-align: right;
+                font-size: 1.3em;
                 &.active.people a {
                     color: black;
                     background-color: $peopleColor;
@@ -211,12 +254,17 @@ $rsColor: lightgreen;
                     background-color: $rsColor;
                 }
                 a {
-                    padding: 0.1em 0 0.1em 1em;
+                    padding: 0.1em 1em 0.1em 1em;
+                    color: $red;
                 }
             }
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid $red;
         }
-        @extend .col-sm-1
+        .btn-group a {
+            color: black;
+            font-size: 1.3em;
+        }
+        @extend .col-sm-2
     }
 }
 
@@ -295,15 +343,16 @@ $rsColor: lightgreen;
     display: block;
 }
 
+h3 {
+    font-family: $font-family;
+    font-size: 2.5em;
+    margin-top: 1em;
+    a { color: black; }
+    a:hover { color: black; }
+}
+
 footer {
     width: 100%;
     text-align: center;
     font-size: 0.8em;
-}
-
-a {
-    color: black;
-    &:hover {
-        text-decoration: none;
-    }
 }
