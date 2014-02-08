@@ -1,0 +1,47 @@
+# Place any notes or comments you have here
+# It will make any customisation easier to understand in the weeks to come
+
+# domain: domain1.com
+# public: /var/www/vhosts/richtimes.ctsdh.luc.edu/domain.com/
+
+<virtualhost *:80>
+
+  # Admin email, Server Name (domain name) and any aliases
+  ServerAdmin webmaster@richtimes.ctsdh.luc.edu
+  ServerName  richtimes.ctsdh.luc.edu
+  #ServerAlias www.richtimes.ctsdh.luc.edu
+
+
+  # Index file and Document Root (where the public files are located)
+  DirectoryIndex index.html
+  DocumentRoot /var/www/vhosts/richtimes.ctsdh.luc.edu/htdocs
+
+
+  <Directory /var/www/vhosts/richtimes.ctsdh.luc.edu/htdocs/>
+          Options Indexes FollowSymLinks MultiViews ExecCGI
+          AllowOverride All
+          Order allow,deny
+          allow from all
+          AddHandler cgi-script .cgi
+  </Directory>
+
+  # Custom log file locations
+  LogLevel warn
+  ErrorLog  /var/www/vhosts/richtimes.ctsdh.luc.edu/log/error.log
+  CustomLog /var/www/vhosts/richtimes.ctsdh.luc.edu/log/access.log combined
+
+
+  # Flask reverse proxy
+  #LoadModule proxy_module /usr/lib/apache2/modules/mod_proxy.so
+  ProxyRequests Off
+  ProxyPreserveHost On
+
+  <Proxy *>
+    		Order deny,allow
+  	Allow from all
+  </Proxy>
+
+  ProxyPass /v1/ http://localhost:5001/v1/
+  ProxyPassReverse /v1/ http://localhost:5001/v1/
+
+</virtualhost>
