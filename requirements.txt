@@ -6,3 +6,4 @@ mysql-python
 pyelasticsearch
 fabric
 supervisor
+python-dateutil==2.2

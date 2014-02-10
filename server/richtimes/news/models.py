@@ -1,7 +1,9 @@
+from calendar import timegm
+from datetime import datetime
+from lxml import etree, html
+import re
 from richtimes import db
 from richtimes.lib import tei
-from lxml import etree, html
-
 
 DATE_XP = '/TEI.2/teiHeader/fileDesc/sourceDesc/biblFull/publicationStmt/date'
 
@@ -44,9 +46,11 @@ class PubData(db.Model):
     __bind_key__ = 'richtimes'
     id = db.Column(db.Integer(), primary_key=True)
     date = db.Column(db.String(10))
+    timegm = db.Column(db.BigInteger(), index=True)
     year = db.Column(db.String(4))
     month = db.Column(db.String(2))
     day = db.Column(db.String(2))
+    weekday = db.Column(db.Integer())
     date_text = db.Column(db.String(50))
     filename = db.Column(db.String(100), unique=True)
     articles = db.relationship('Article', backref='issue', lazy='dynamic')
@@ -56,6 +60,8 @@ class PubData(db.Model):
     def __init__(self, filename):
         self.filename = filename
         tree = self.get_etree()
+        db.session.add(self)
+        db.session.flush()
         self._parse(tree)
 
     def get_etree(self):
@@ -78,6 +84,10 @@ class PubData(db.Model):
         """
         date_el = self.get_etree().xpath(DATE_XP)[0]
         self.date = date_el.attrib['value']
+        [y, m, d] = map(int, self.date.split('-'))
+        as_datetime = datetime(y, m, d)
+        self.timegm = timegm(as_datetime.timetuple())
+        self.weekday = as_datetime.weekday()
         self.year, self.month, self.day = self.date.split('-')
         self.date_text = date_el.text
 
@@ -165,6 +175,13 @@ class Article(db.Model, BaseIssueNode):
                 'xpath': self.xpath,
                 'content': self.content,
                 'related': related}
+
+    def wordcount(self):
+        text = self.get_etree().xpath('string()')
+        return {'count': len(filter(bool, re.split('\s+', text))),
+                'section': self.section_type,
+                'subsection': self.subsection_type,
+                'type': self.article_type}
 
 
 class BaseArticleEntity:

@@ -46,7 +46,7 @@ module.exports = (grunt) ->
         'select2/select2.css'
         'select2/select2.png'
         'select2/select2-spinner.gif'
-        'spin.js/dist/spin.js'
+        'spin.js/spin.js'
         'requirejs/require.js'
         'requirejs-text/text.js'
       ]

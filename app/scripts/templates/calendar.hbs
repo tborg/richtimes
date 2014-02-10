@@ -1,0 +1,19 @@
+<nav>
+	<div class="row">
+		{{#each selectors}}
+			<div class="col-md-3">
+                {{paged-select2 type=type
+                                value=value
+                                options=options
+                                nextText=next
+                                prevText=prev
+                                initSelection=initSelection
+                                style="width: 100%;"
+                                select="changeCalendar"}}
+            </div>
+        {{/each}}
+	</div>
+</nav>
+<div class="row">
+	{{outlet}}
+</div>

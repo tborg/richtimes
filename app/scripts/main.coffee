@@ -19,7 +19,7 @@ require.config
 		handlebars: '../vendor/handlebars/handlebars'
 		lodash: '../vendor/lodash/dist/lodash'
 		select2: '../vendor/select2/select2'
-		spin: '../vendor/spin.js/dist/spin'
+		spin: '../vendor/spin.js/spin'
 		text: '../vendor/requirejs-text/text'
 
 	shim:

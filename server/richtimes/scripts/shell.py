@@ -3,7 +3,7 @@ from lxml import etree
 from os import path
 from richtimes.news.models import PubData
 from flask.ext.script import Command
-from richtimes.news import models
+from richtimes.news import models, views
 import json
 from glob import glob
 from os.path import join
@@ -92,14 +92,46 @@ def build_index():
         print 'wrote ' + sections_path
 
 
-class Rebuild(Command):
+def build_wordcount():
+    issues = views.issues_y_m()
+    basepath = path.join(app.root_path, app.config['JSON_DIR'])
 
+    def update_o(o, y, m, d, q):
+        key = '%04d-%02d-%02d' % (y, m, d)
+        date_articles = []
+        for issue in q.all() or []:
+            date_articles.extend(map(lambda x: x.wordcount(), issue.articles))
+        o.append([key, date_articles])
+        print '%s\t\t\t%d' % (key, sum(map(lambda x: x['count'],
+                                           date_articles)))
+
+    for year, months in issues.iteritems():
+        for month, days in months.iteritems():
+            fpath = path.join(basepath, '%04d-%02d-wc.json' % (year, month))
+            o = []
+            for i, q in enumerate(days):
+                update_o(o, year, month, i, q)
+            with open(fpath, 'w') as fout:
+                fout.write(json.dumps(o))
+                print 'wrote ' + fpath
+
+    calendar = map(lambda d: [d.year, d.month, d.day, d.weekday()],
+                   views.calendar())
+    with open(path.join(basepath, 'calendar.json'), 'w') as fout:
+        fout.write(json.dumps(calendar))
+
+
+class BuildWordcount(Command):
+    def run(self):
+        build_wordcount()
+
+
+class Rebuild(Command):
     def run(self):
         drop_and_rebuild_tables()
 
 
 class Index(Command):
-
     def run(self):
         build_index()
 
@@ -116,4 +148,5 @@ def make_shell_context():
             'drop_and_rebuild_tables': drop_and_rebuild_tables,
             'PubData': PubData,
             'build_index': build_index,
-            'build_repo': build_repo}
+            'build_repo': build_repo,
+            'views': views}

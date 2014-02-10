@@ -1,4 +1,4 @@
-from os import environ
+from os import environ, path
 
 
 class Config(dict):
@@ -15,5 +15,5 @@ class Config(dict):
 
     APP_ROOT_FROM_MAIN = '../../'
 
-    XML_DIR = APP_ROOT_FROM_MAIN + '/bower_components/richtimes-xml'
-    JSON_DIR = APP_ROOT_FROM_MAIN + '/app/json'
+    XML_DIR = path.join(APP_ROOT_FROM_MAIN, 'bower_components/richtimes-xml')
+    JSON_DIR = path.join(APP_ROOT_FROM_MAIN, 'app/json')

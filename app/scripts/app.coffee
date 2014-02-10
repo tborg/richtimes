@@ -18,10 +18,12 @@ define (require) ->
     {name: 'browse/section', hbs: require 'text!./templates/section.hbs'}
     {name: 'search', hbs: require 'text!./templates/search.hbs'}
     {name: 'search/page', hbs: require 'text!./templates/searchPage.hbs'}
-
+    {name: 'calendar', hbs: require 'text!././templates/calendar.hbs'}
+    {name: 'calendar/month', hbs: require 'text!././templates/calendarMonth.hbs'}
     {name: 'components/token-collector', hbs: require 'text!./templates/components/tokenCollector.hbs'}
     {name: 'components/paged-select2', hbs: require 'text!./templates/components/pagedSelect2.hbs'}
     {name: 'components/loading-spinner', hbs: require 'text!./templates/components/loadingSpinner.hbs'}
+    {name: 'components/d3-calendar', hbs: '<svg {{bindAttr height="height" width="width"}}></svg>'}
   ]
 
   for {name, hbs} in templates
@@ -102,9 +104,12 @@ define (require) ->
       more: options.length > page * 10
     callback results
 
+  numberPad2 = d3.format('02d')
+  wcJsonFile = (params) -> '/static/json/%@-%@-wc.json'.fmt params.year, numberPad2 params.month
+
   # APPLICATION
 
-  App = Ember.Application.create
+  window.App = Ember.Application.create
     LOG_TRANSITIONS: true
 
   # ROUTER
@@ -114,6 +119,8 @@ define (require) ->
       @route 'section'
     @resource 'search', ->
       @route 'page', {path: '/:page'}
+    @resource 'calendar', ->
+      @route 'month', {path: '/:year/:month'}
 
   # ROUTES
 
@@ -155,8 +162,6 @@ define (require) ->
     actions:
       toggleDetails: (d) ->
         @controllerFor('browse').toggleProperty('showDetails')
-
-
 
   # # BROWSE - > SECTION
   App.BrowseSectionRoute = Ember.Route.extend
@@ -231,6 +236,41 @@ define (require) ->
           .getProperties(['limit', 'articles', 'page'])
         if (page + increment) > 0 and not Ember.isEmpty articles
           @transitionTo 'search.page', page: parseInt(page, 10) + parseInt(increment, 10)
+
+  App.CalendarRoute = Ember.Route.extend
+    model: (params, transition) ->
+      $.getJSON('/static/json/calendar.json')
+        .then (model) =>
+          {year, month} = transition.params
+          if not year or not month then [year, month] = _.first model
+          @controllerFor('calendar').setProperties
+            year: String(year)
+            month: String(month)
+          model
+    afterModel: (model, transition) ->
+      if routeIsTarget(transition, @)
+        params = @controllerFor('calendar').getProperties ['year', 'month']
+        $.getJSON(wcJsonFile params)
+          .then (d) => @transitionTo 'calendar.month', d
+
+    actions:
+      changeCalendar: ({type, value}) ->
+        c = @controllerFor 'calendar'
+        if type is 'month' and isNaN(Number value)
+          value = c.get('months').findProperty('text', value).id
+        c.set type, value
+        if type is 'year' then c.set 'month', c.get('months')?[0]?.id
+        $.getJSON(wcJsonFile c.getProperties ['year', 'month'])
+          .then (d) => @transitionTo 'calendar.month', d
+
+  App.CalendarMonthRoute = Ember.Route.extend
+    model: (params) ->
+      $.getJSON(wcJsonFile params)
+
+    afterModel: (model) -> console.log model
+
+    serialize: () ->
+      @controllerFor('calendar').getProperties(['year', 'month'])
 
   # CONTROLLERS
 
@@ -316,7 +356,7 @@ define (require) ->
           @set 'index', (index = @get('%@Index'.fmt type).page value)
           if not ((child = @get 'alternateRoot') in index.childOptions)
             @set child, index.childOptions[0]
-        @transitionToRoute 'browse.section', @get('content')
+        @transitionTo 'browse.section', @get('content')
 
       changeSubject: ({text}) ->
         activeSubjects = @get 'activeSubjects'
@@ -355,7 +395,7 @@ define (require) ->
         more: data.more
 
     contentChanged: (() ->
-      @transitionToRoute 'search.page', page: 1
+      @transitionTo 'search.page', page: 1
     ).observes('content')
 
     actions:
@@ -386,6 +426,70 @@ define (require) ->
               a
             {offset: limit * (parseInt(page, 10) - 1)}
           )
+
+  # # CALENDAR
+
+  App.CalendarController = Ember.ArrayController.extend
+    year: null
+    month: null
+
+    years: (() ->
+      years = _.uniq @get('content').map ([y]) -> String(y)
+      years.map (d) -> text: d, id: d
+    ).property('content')
+
+    months: (() ->
+      year = Number @get 'year'
+      monthNameFormatter = d3.time.format('%B')
+      now = new Date()
+      nameFor = (m) ->
+        now.setMonth m - 1
+        monthNameFormatter now
+      months = _.uniq @get('content').filter((d) -> d[0] is year).map ([_, m]) -> String m
+      months.map (d) -> id: d, text: nameFor d
+    ).property('year', 'content')
+
+    selectors: (() ->
+      years = @get 'years'
+      year = @get 'year'
+      yi = years.indexOf years.findProperty 'id', year
+      month = @get 'month'
+      months = @get('months')
+      mi = months.indexOf months.findProperty 'id', month
+      [
+        {
+          type: 'year',
+          next: years[yi + 1]?.text or ''
+          prev: years[yi - 1]?.text or ''
+          value: String year
+          options: years
+          initSelection: (el, cb) ->
+            cb @get('options').findProperty('id', @get 'value')
+        }
+        {
+          type: 'month',
+          next: months[mi + 1]?.text or ''
+          prev: months[mi - 1]?.text or ''
+          value: String month
+          options: months
+          initSelection: (el, cb) ->
+            cb @get('options').findProperty('id', @get 'value')
+        }
+      ]
+    ).property('year', 'month', 'years', 'months')
+
+  # # CALENDAR -> MONTH
+
+  App.CalendarMonthController = Ember.ArrayController.extend
+    needs: ['calendar']
+    offset: (() ->
+      year = Number @get 'controllers.calendar.year'
+      month = Number @get 'controllers.calendar.month'
+      for [y, m, d, wd] in @get('controllers.calendar.content')
+        if y is year and m is month and d is 1
+          return wd
+      return 0
+    ).property('controllers.calendar.month', 'controllers.calendar.year')
 
   # VIEWS
 
@@ -546,3 +650,75 @@ define (require) ->
         .off('change')
         .select2('destroy')
       @_super()
+
+  App.D3CalendarComponent = Ember.Component.extend
+    data: undefined
+    offset: undefined
+    cellWidth: 100
+    cellHeight: 100
+    cellPadding: 25
+    margin: 25
+
+    height: (() ->
+      6 * (@cellHeight + @cellPadding) + (@margin * 2)
+    ).property('cellHeight', 'cellPadding', 'margin')
+
+    width: (() ->
+      7 * (@cellWidth + @cellPadding) + (@margin * 2)
+    ).property('cellWidth', 'cellPadding', 'margin')
+
+    paddedData: (() ->
+      offset = @getWithDefault 'offset', 0
+      data = @getWithDefault 'data', []
+      pre = d3.range(0, offset).map(-> null)
+      post = d3.range(0, 35 - offset - data.length).map(-> null)
+      pre.concat(data).concat(post)
+    ).property('data', 'offset')
+
+    translateCell: (d, i) ->
+      row = (Math.floor i / 7)
+      cell = i % 7
+      height = @cellHeight + @cellPadding
+      width = @cellWidth + @cellPadding
+      x = width * cell + @margin
+      y = height * row + @margin
+      "translate(#{x}, #{y})"
+
+    drawCell: (selection) ->
+      cell = selection.selectAll('rect')
+        .data((d) -> [d].filter(Boolean))
+
+      cell.enter().append('rect')
+      cell
+        .attr('height', @cellHeight)
+        .attr('width', @cellWidth)
+
+      text = selection.selectAll('text')
+        .data((d, i) => if d then [i - @offset] else [])
+
+      text.enter().append('text')
+      text
+        .text((d) -> d + 1)
+        .attr('x', '20')
+        .attr('y', '20')
+        .attr('font-size', '20px')
+        .attr('fill', 'white')
+      text.exit().remove()
+      cell.exit().remove()
+      selection
+
+    draw: (() ->
+      days = d3.select(@$('svg')[0])
+        .selectAll('.day')
+        .data(@get('paddedData'))
+
+      days
+        .enter()
+        .append('g').classed('day', true)
+
+      days
+        .attr('transform', _.bind @translateCell, @)
+        .call(_.bind @drawCell, @)
+
+      days.exit().remove()
+    ).on('didInsertElement').observes('data', 'offset')

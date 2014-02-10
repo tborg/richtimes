@@ -1,11 +1,12 @@
 from richtimes import app
-from richtimes.scripts.shell import make_shell_context, Rebuild, Index
+from richtimes.scripts.shell import make_shell_context, Rebuild, Index, BuildWordcount
 from flask.ext.script import Manager, Shell
 
 manager = Manager(app)
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('rebuild', Rebuild())
 manager.add_command('index-json', Index())
+manager.add_command('build-wc', BuildWordcount())
 
 if __name__ == '__main__':
     manager.run()
