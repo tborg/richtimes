@@ -387,7 +387,7 @@ define (require) ->
     searchSuggestionsQuery:
       url: '/v1/suggestions'
       dataType: 'json'
-      quitMillis: 500
+      quitMillis: 250
       cache: true
       data: (term, page) -> {term, page}
       results: (data) ->
@@ -492,7 +492,11 @@ define (require) ->
     ).property('controllers.calendar.month', 'controllers.calendar.year')
 
     drawCell: (selection) ->
-      sectionNest = d3.nest().key((d) -> d.section)
+      sectionNest = d3.nest()
+        .key((d) -> d.section)
+        .key((d) -> d.subsection)
+
+      colors = d3.scale.category20()
 
       count = (d) -> if d then d3.sum d.mapProperty 'count' else d
 
@@ -508,12 +512,73 @@ define (require) ->
       cell.enter().append('rect').classed('total', true)
 
       cell
+        .attr('height', 0)
+        .attr('width', 0)
         .transition()
-        .duration(500)
+        .duration(250)
         .attr('height', (d) -> height * d / max)
         .attr('width', (d) -> width * d / max)
         .attr('x', (d) -> (width - width * d / max) / 2)
         .attr('y', (d) -> (height - height * d / max) / 2)
+
+      section = selection.selectAll('.section')
+        .data((d) ->
+          if not d then return []
+          dayWC = d3.sum d.mapProperty 'count'
+          nestedBySection = sectionNest.entries(Ember.makeArray d)
+          data = nestedBySection
+            .map(({key, values}) ->
+              key: key
+              values: values
+              count: d3.sum _.flatten values.map ({values}) -> d3.sum values.mapProperty 'count'
+            )
+            .reduce(
+              ({offset, sections}, {key, values, count}) ->
+                p = count / dayWC
+                {offset: offset + p, sections: sections.concat([{dayWC, offset, p, key, values}])}
+              {offset: 0, sections: []}
+          ).sections.filterProperty('dayWC')
+          _.sortBy(data, (d) -> d.key)
+        )
+
+      section.enter().append('rect').classed('section', true)
+
+      section
+        .attr('fill', ({key}) -> colors key)
+        .attr('height', 0)
+        .attr('width', 0)
+        .attr('opacity', 0)
+        .transition()
+        .duration(250)
+        .attr('x', ({dayWC}) ->
+          s = dayWC / max
+          ((width - width * dayWC / max) / 2) + 5
+        )
+        .attr('y', ({offset, dayWC}) ->
+          s = dayWC / max
+          margin = (height - height * dayWC / max) / 2
+          height * s * offset + margin
+        )
+        .attr('height', ({p, dayWC}) -> height * (dayWC / max) * p)
+        .attr('width', ({dayWC, p}) ->
+          margin = ((width - width * dayWC / max))
+          (width * (dayWC / max)) - 5
+        )
+        .attr('opacity', 1)
+
+      section.exit()
+        # .transition()
+        # .attr('width', 0)
+        # .attr('height', 0)
+        .remove()
+
+      cell.exit()
+        .transition()
+        .each('start', (d) -> if not d then d3.select(@).attr('width', 0).attr('height', 0))
+        .duration(250)
+        .attr('height', 0)
+        .attr('width', 0)
+        .remove()
 
       datetext = selection.selectAll('.datetext')
         .data((d, i) => if d then [i - @offset] else [])
@@ -524,42 +589,11 @@ define (require) ->
         .text((d) -> d + 1)
         .attr('x', height - 20)
         .attr('y', '20')
-        .attr('font-size', '16px')
+        .attr('font-size', '24px')
+        .attr('font-weight', 'bold')
         .attr('fill', 'red')
 
       datetext.exit().remove()
-
-      # section = selection.selectAll('.section')
-      #   .data((d) -> sectionNest.entries(Ember.makeArray d)
-      #     .map(({key, values}) -> d3.sum values.mapProperty 'count')
-      #     .reduce(
-      #       ({offset, sections}, sectionWC) ->
-      #         {offset: offset + sectionWC + 5, sections: sections.concat([{offset, sectionWC}])}
-      #       {offset: 5, sections: []}
-      #     )
-      #   )
-
-      # section.enter().append('rect').classed('section', true)
-
-      # section
-      #   .transition()
-      #   .attr('x', 10)
-      #   .attr('y', ({offset}) -> offset)
-      #   .attr('height', ({sectionWC}) -> sectionWC)
-      #   .attr('width', width - 5)
-
-      # section.exit()
-      #   .transition()
-      #   .attr('width', 0)
-      #   .attr('height', 0)
-      #   .remove()
-
-      cell.exit()
-        .transition()
-        .duration(500)
-        .attr('height', 0)
-        .attr('width', 0)
-        .remove()
 
       selection
 
@@ -728,8 +762,8 @@ define (require) ->
     offset: undefined
     cellWidth: 100
     cellHeight: 100
-    cellPadding: 25
-    margin: 25
+    cellPadding: 10
+    margin: 10
 
     height: (() ->
       6 * (@cellHeight + @cellPadding) + (@margin * 2)
