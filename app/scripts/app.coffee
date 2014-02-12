@@ -491,6 +491,78 @@ define (require) ->
       return 0
     ).property('controllers.calendar.month', 'controllers.calendar.year')
 
+    drawCell: (selection) ->
+      sectionNest = d3.nest().key((d) -> d.section)
+
+      count = (d) -> if d then d3.sum d.mapProperty 'count' else d
+
+      counts = @get('data').map(count)
+      max = d3.max counts
+
+      height = @cellHeight
+      width = @cellWidth
+
+      cell = selection.selectAll('.total')
+        .data((d) -> [d].map(count).filter(Boolean))
+
+      cell.enter().append('rect').classed('total', true)
+
+      cell
+        .transition()
+        .duration(500)
+        .attr('height', (d) -> height * d / max)
+        .attr('width', (d) -> width * d / max)
+        .attr('x', (d) -> (width - width * d / max) / 2)
+        .attr('y', (d) -> (height - height * d / max) / 2)
+
+      datetext = selection.selectAll('.datetext')
+        .data((d, i) => if d then [i - @offset] else [])
+
+      datetext.enter().append('text').classed('datetext', true)
+
+      datetext
+        .text((d) -> d + 1)
+        .attr('x', height - 20)
+        .attr('y', '20')
+        .attr('font-size', '16px')
+        .attr('fill', 'red')
+
+      datetext.exit().remove()
+
+      # section = selection.selectAll('.section')
+      #   .data((d) -> sectionNest.entries(Ember.makeArray d)
+      #     .map(({key, values}) -> d3.sum values.mapProperty 'count')
+      #     .reduce(
+      #       ({offset, sections}, sectionWC) ->
+      #         {offset: offset + sectionWC + 5, sections: sections.concat([{offset, sectionWC}])}
+      #       {offset: 5, sections: []}
+      #     )
+      #   )
+
+      # section.enter().append('rect').classed('section', true)
+
+      # section
+      #   .transition()
+      #   .attr('x', 10)
+      #   .attr('y', ({offset}) -> offset)
+      #   .attr('height', ({sectionWC}) -> sectionWC)
+      #   .attr('width', width - 5)
+
+      # section.exit()
+      #   .transition()
+      #   .attr('width', 0)
+      #   .attr('height', 0)
+      #   .remove()
+
+      cell.exit()
+        .transition()
+        .duration(500)
+        .attr('height', 0)
+        .attr('width', 0)
+        .remove()
+
+      selection
+
   # VIEWS
 
   # # APPLICATION
@@ -684,33 +756,12 @@ define (require) ->
       y = height * row + @margin
       "translate(#{x}, #{y})"
 
-    drawCell: (selection) ->
-      cell = selection.selectAll('rect')
-        .data((d) -> [d].filter(Boolean))
-
-      cell.enter().append('rect')
-      cell
-        .attr('height', @cellHeight)
-        .attr('width', @cellWidth)
-
-      text = selection.selectAll('text')
-        .data((d, i) => if d then [i - @offset] else [])
-
-      text.enter().append('text')
-      text
-        .text((d) -> d + 1)
-        .attr('x', '20')
-        .attr('y', '20')
-        .attr('font-size', '20px')
-        .attr('fill', 'white')
-      text.exit().remove()
-      cell.exit().remove()
-      selection
+    drawCell: (selection) -> selection
 
     draw: (() ->
       days = d3.select(@$('svg')[0])
         .selectAll('.day')
-        .data(@get('paddedData'))
+        .data(@get('paddedData'), (d, i) => String i + @offset)
 
       days
         .enter()
@@ -718,6 +769,8 @@ define (require) ->
 
       days
         .attr('transform', _.bind @translateCell, @)
+
+      days
         .call(_.bind @drawCell, @)
 
       days.exit().remove()

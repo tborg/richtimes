@@ -101,7 +101,7 @@ def build_wordcount():
         date_articles = []
         for issue in q.all() or []:
             date_articles.extend(map(lambda x: x.wordcount(), issue.articles))
-        o.append([key, date_articles])
+        o.append(date_articles)
         print '%s\t\t\t%d' % (key, sum(map(lambda x: x['count'],
                                            date_articles)))
 
