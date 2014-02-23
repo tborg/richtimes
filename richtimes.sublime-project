@@ -2,8 +2,8 @@
 	"folders":
 	[
 		{
-			"path": "/Users/trevorborg/richtimes",
-     	    "folder_exclude_patterns": ["node_modules", "env", ".tmp", "build", "dist", "bower_components"}]
+			"path": "/Users/tborg/richtimes",
+     	    "folder_exclude_patterns": ["node_modules", "env", "build", "dist", "bower_components", ".*"]
 		}
 	]
 }
