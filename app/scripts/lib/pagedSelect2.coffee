@@ -2,8 +2,24 @@ define (require) ->
   require 'select2'
   Ember = require 'ember'
   _ = require 'lodash'
+  
+  select2Query = ({term, callback, page}) ->
+    get_options = (opts) ->
+      opts.filter((d) ->
+        if d.children
+          text: d.text, children: get_options d.children
+        else
+          (d.text or d).toLowerCase().match term
+      )
+    options = get_options @get('options')
+    results = 
+      results: options
+        .slice((page - 1) * 10, page * 10)
+        .map((d) -> if d.text then d else text: d, id: d)
+      more: options.length > page * 10
+    callback results
 
-  Ember.TEMPLATES['components/paged-select2'] = Ember.Handlebars.compile require './pagedSelect2.hbs'
+  Ember.TEMPLATES['components/paged-select2'] = Ember.Handlebars.compile require 'text!./pagedSelect2.hbs'
 
   (App) ->
     App.PagedSelect2Component = Ember.Component.extend

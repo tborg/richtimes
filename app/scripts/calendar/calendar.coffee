@@ -2,6 +2,7 @@ define (require) ->
   Ember = require 'ember'
   d3 = require 'd3'
   _ = require 'lodash'
+  util = require 'lib/util'
 
   Ember.TEMPLATES['calendar'] = Ember.Handlebars.compile require 'text!./calendar.hbs'
 
@@ -17,9 +18,9 @@ define (require) ->
               month: String(month)
             model
       afterModel: (model, transition) ->
-        if routeIsTarget(transition, @)
+        if util.routeIsTarget(transition, @)
           params = @controllerFor('calendar').getProperties ['year', 'month']
-          $.getJSON(wcJsonFile params)
+          $.getJSON(util.wcJsonFile params)
             .then (d) => @transitionTo 'calendar.month', d
 
       actions:
@@ -29,7 +30,7 @@ define (require) ->
             value = c.get('months').findProperty('text', value).id
           c.set type, value
           if type is 'year' then c.set 'month', c.get('months')?[0]?.id
-          $.getJSON(wcJsonFile c.getProperties ['year', 'month'])
+          $.getJSON(util.wcJsonFile c.getProperties ['year', 'month'])
             .then (d) => @transitionTo 'calendar.month', d
 
     App.CalendarController = Ember.ArrayController.extend

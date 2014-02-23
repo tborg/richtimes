@@ -1,13 +1,14 @@
 define (require) ->
   Ember = require 'ember'
   d3 = require 'd3'
+  util = require 'lib/util'
 
   Ember.TEMPLATES['calendar/month'] = Ember.Handlebars.compile require 'text!./calendarMonth.hbs'
 
   (App) ->
     App.CalendarMonthRoute = Ember.Route.extend
       model: (params) ->
-        $.getJSON(wcJsonFile params)
+        $.getJSON(util.wcJsonFile params)
 
       serialize: () ->
         @controllerFor('calendar').getProperties(['year', 'month'])

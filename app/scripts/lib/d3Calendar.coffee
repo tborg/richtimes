@@ -2,7 +2,7 @@ define (require) ->
   Ember = require 'ember'
   d3 = require 'd3'
 
-  Ember.TEMPLATES['components/d3-calendar'] = Ember.Handlebars.compile require './d3Calendar.hbs'
+  Ember.TEMPLATES['components/d3-calendar'] = Ember.Handlebars.compile require 'text!./d3Calendar.hbs'
 
   (App) ->
     App.D3CalendarComponent = Ember.Component.extend

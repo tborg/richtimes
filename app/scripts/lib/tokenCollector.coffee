@@ -3,9 +3,12 @@ define (require) ->
   Ember = require 'ember'
   _ = require 'lodash'
 
-  Ember.TEMPLATES['components/token-collector'] = Ember.Handlebars.compile require './tokenCollector.hbs'
+  Ember.TEMPLATES['components/token-collector'] = Ember.Handlebars.compile require 'text!./tokenCollector.hbs'
 
   (App) ->
+    ###
+    The token collector component wraps a multiselectable select2.
+    ###
     App.TokenCollectorComponent = Ember.Component.extend
       value: null
       placeholder: null

@@ -2,7 +2,7 @@ define (require) ->
   Spinner = require 'spin'
   Ember = require 'ember'
 
-  Ember.TEMPLATES['components/loading-spinner'] = Ember.Handlebars.compile require './loadingSpinner.hbs'
+  Ember.TEMPLATES['components/loading-spinner'] = Ember.Handlebars.compile require 'text!./loadingSpinner.hbs'
   (App) ->
     App.LoadingSpinnerComponent = Ember.Component.extend
       classNames: ['loading-spinner']

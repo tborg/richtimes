@@ -9,9 +9,9 @@ define (require) ->
   Defines the top-level Application and Index routes.
   """
   Ember = require 'ember'
+  util = require 'lib/util'
   require 'bootstrapCollapse'
-
-  Ember.TEMPLATES['index'] = Ember.Handlebars.compile require './index.hbs'
+  Ember.TEMPLATES['index'] = Ember.Handlebars.compile require 'text!index.hbs'
 
   ###
   Create the application instance.
@@ -23,6 +23,8 @@ define (require) ->
   ###
   window.App = Ember.Application.create
     LOG_TRANSITIONS: true
+
+  App.deferReadiness()
 
   ###
   All route and component modules expose `load` methods that
@@ -69,7 +71,7 @@ define (require) ->
   ###
   App.IndexRoute = Ember.Route.extend
     afterModel: (m, transition) ->
-      if routeIsTarget transition, @
+      if util.routeIsTarget transition, @
         @transitionTo 'browse'
 
   ###
@@ -82,3 +84,5 @@ define (require) ->
     scrollTop: (() ->
       @$('footer a.scroll-top').click(() -> $('body').animate(scrollTop: '0'); false)
     ).on('didInsertElement')
+
+  App.advanceReadiness()

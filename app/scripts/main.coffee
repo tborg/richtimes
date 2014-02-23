@@ -1,3 +1,6 @@
+###
+Configure requirejs with paths to and shims for dependencies.
+###
 require.config
 	paths:
 		app: './app'
@@ -58,4 +61,5 @@ require.config
 		select2:
 			deps: ['jquery']
 
-require ['./app'], -> # launches the application
+# launches the application
+require ['./app'], ->

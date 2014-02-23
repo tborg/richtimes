@@ -71,8 +71,8 @@ module.exports = (grunt) ->
       cwd: dev 'images'
       src: '*.*'
     templates:
-      dest: htdocs 'js/templates'
-      cwd: dev 'scripts/templates'
+      dest: htdocs 'js'
+      cwd: dev 'scripts'
       src: '**/*.hbs'
     server:
       dest: '/'
