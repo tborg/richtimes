@@ -13,7 +13,6 @@ def with_articles(fn):
     def handler(date, subsection_type, **kwargs):
         arts = models.Article.query.filter_by(date=date,
                                               subsection_type=subsection_type)
-        kwargs
         return fn(date, subsection_type, arts, **kwargs)
     return handler
 
